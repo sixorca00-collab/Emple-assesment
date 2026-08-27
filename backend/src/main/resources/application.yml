@@ -16,6 +16,9 @@ spring:
     baseline-on-migrate: true
 
 riwi:
+  search:
+    # config de text search para websearch_to_tsquery/ts_headline; DEBE coincidir con el trigger trg_rw_message_search_sync
+    text-config: ${SEARCH_TEXT_CONFIG:spanish}
   jwt:
     # secreto HS256: minimo 32 caracteres (256 bits). Nunca hardcodeado, siempre por entorno.
     secret: ${JWT_SECRET:local-dev-secret-change-me-please-32bytes!}
