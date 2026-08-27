@@ -27,7 +27,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/health").permitAll()
+                        // /ws/** se autentica en el handshake (JwtHandshakeInterceptor), no con el filtro Bearer
+                        .requestMatchers("/auth/**", "/health", "/ws/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
                 // el filtro JWT corre antes del filtro estandar de usuario/clave
