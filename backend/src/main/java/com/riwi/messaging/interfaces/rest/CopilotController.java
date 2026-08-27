@@ -11,8 +11,14 @@ import com.riwi.messaging.interfaces.rest.dto.CopilotHistoryResponse;
 import com.riwi.messaging.interfaces.rest.dto.CopilotQueryRequest;
 import com.riwi.messaging.interfaces.rest.dto.CopilotQueryResponse;
 import com.riwi.messaging.interfaces.rest.dto.CopilotUsageResponse;
+import com.riwi.messaging.interfaces.rest.dto.ErrorResponse;
 import com.riwi.messaging.interfaces.rest.dto.PageResponse;
 import com.riwi.messaging.interfaces.rest.support.CursorCodec;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 
 // endpoints del copiloto RAG; el actor sale siempre del JWT
+@Tag(name = "Copiloto", description = "Copiloto RAG: recuperacion limitada por permisos, historial y consumo de tokens")
 @RestController
 @RequestMapping("/copilot")
 public class CopilotController {
@@ -43,6 +50,10 @@ public class CopilotController {
         this.getHistory = getHistory;
     }
 
+    @Operation(summary = "Pregunta al copiloto; solo usa contexto de canales donde el actor es miembro")
+    @ApiResponse(responseCode = "200", description = "Respuesta con citas, o negativa honesta si no hay contexto")
+    @ApiResponse(responseCode = "401", description = "Falta el Bearer o es invalido",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/query")
     public CopilotQueryResponse query(@AuthenticationPrincipal TokenClaims actor,
                                       @Valid @RequestBody CopilotQueryRequest request) {
@@ -51,6 +62,7 @@ public class CopilotController {
         return CopilotQueryResponse.from(answer);
     }
 
+    @Operation(summary = "Consumo de tokens del copiloto; el actor ve lo suyo, platform admin desglosa por usuario")
     @GetMapping("/usage")
     public List<CopilotUsageResponse> usage(@AuthenticationPrincipal TokenClaims actor,
                                             @RequestParam(required = false) UUID userId,
@@ -62,6 +74,7 @@ public class CopilotController {
                 .toList();
     }
 
+    @Operation(summary = "Historial de consultas del propio actor con keyset pagination")
     @GetMapping("/history")
     public PageResponse<CopilotHistoryResponse> history(@AuthenticationPrincipal TokenClaims actor,
                                                         @RequestParam(required = false) String cursor,
