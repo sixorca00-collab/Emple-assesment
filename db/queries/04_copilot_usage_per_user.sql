@@ -13,6 +13,11 @@
 --   - total_tokens es columna GENERATED (prompt_tokens + completion_tokens): la suma es siempre consistente.
 --   - Todo parametrizado; sin OFFSET (es una agregacion, se pagina por keyset sobre user_id si hace falta).
 --   - Pensada para un rol de reporte / administrador; rw_copilot_query no expone contenido de canales.
+--
+-- Nota de implementacion (backend):
+--   GET /copilot/usage ejecuta esta agregacion anadiendo en el WHERE el filtro de alcance:
+--   un actor no administrador solo ve su propia fila (q.user_id = :actor_id); is_platform_admin
+--   puede pasar ?userId= para desglosar por usuario o ver todas. El rango :from/:to sigue siendo opcional.
 
 SELECT
     q.user_id,
