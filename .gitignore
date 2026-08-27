@@ -1,0 +1,22 @@
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Env / secrets
+.env
+.env.local
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Java / Maven
+target/
+*.class
+
+# Logs
+*.log
