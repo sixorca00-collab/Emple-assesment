@@ -84,5 +84,13 @@
         <span *ngIf="status() === 'loading'">{{ 'login.loading' | translate }}</span>
       </button>
     </form>
+
+    <!-- Enlace a la pantalla de registro -->
+    <p class="text-center text-sm text-slate-500 dark:text-slate-400">
+      {{ 'login.noAccount' | translate }}
+      <a routerLink="/register" class="font-semibold text-brand-600 hover:text-brand-700">
+        {{ 'login.createAccount' | translate }}
+      </a>
+    </p>
   </div>
 </div>

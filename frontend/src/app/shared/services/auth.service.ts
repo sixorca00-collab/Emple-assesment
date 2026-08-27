@@ -48,6 +48,23 @@ export class AuthService {
       );
   }
 
+  // contrato asumido: POST /auth/register aun no existe en el backend
+  // responde igual que /auth/login para poder auto-loguear al usuario
+  register(payload: {
+    name: string;
+    jobTitle: string;
+    email: string;
+    password: string;
+  }): Observable<void> {
+    // creamos la cuenta y guardamos los tokens que devuelve para dejar la sesion abierta
+    return this.http
+      .post<TokenResponse>(`${API_BASE_URL}/auth/register`, payload)
+      .pipe(
+        tap((tokens) => this.saveTokens(tokens)),
+        map(() => undefined),
+      );
+  }
+
   refresh(): Observable<string> {
     const refreshToken = this.getStoredRefreshToken();
     if (!refreshToken) {

@@ -58,6 +58,34 @@ describe('AuthService', () => {
     expect(localStorage.getItem('riwi_refresh_token')).toBe('refresh-abc');
   });
 
+  it('register crea la cuenta y deja la sesion abierta (auto-login)', () => {
+    service
+      .register({
+        name: 'Ana Ruiz',
+        jobTitle: 'Developer',
+        email: 'ana@riwi.io',
+        password: 'secret123',
+      })
+      .subscribe();
+
+    const req = http.expectOne(`${API_BASE_URL}/auth/register`);
+    expect(req.request.body).toEqual({
+      name: 'Ana Ruiz',
+      jobTitle: 'Developer',
+      email: 'ana@riwi.io',
+      password: 'secret123',
+    });
+    req.flush({
+      accessToken: fakeJwt(),
+      refreshToken: 'refresh-abc',
+      tokenType: 'Bearer',
+      expiresInSeconds: 900,
+    });
+
+    expect(service.isLoggedIn()).toBe(true);
+    expect(localStorage.getItem('riwi_refresh_token')).toBe('refresh-abc');
+  });
+
   it('currentUser expone los claims del token', () => {
     service.login('juan.olarte@riwi.io', 'Password123!').subscribe();
     http.expectOne(`${API_BASE_URL}/auth/login`).flush({
