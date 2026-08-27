@@ -22,6 +22,8 @@
     "passwordPlaceholder": "Tu contraseña",
     "submit": "Entrar",
     "loading": "Entrando...",
+    "noAccount": "¿No tienes cuenta?",
+    "createAccount": "Crear cuenta",
     "validation": {
       "emailRequired": "El correo es obligatorio",
       "emailInvalid": "El correo no tiene un formato válido",
@@ -29,6 +31,38 @@
     },
     "error": {
       "invalid": "Correo o contraseña incorrectos",
+      "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
+    }
+  },
+  "register": {
+    "title": "Crear cuenta",
+    "subtitle": "Regístrate en la plataforma de mensajería Riwi",
+    "name": "Nombre completo",
+    "namePlaceholder": "Ana Ruiz",
+    "jobTitle": "Cargo",
+    "jobTitlePlaceholder": "Desarrolladora de software",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tu.correo@riwi.io",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Mínimo 8 caracteres",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Repite la contraseña",
+    "submit": "Registrarme",
+    "loading": "Creando cuenta...",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "link": "Inicia sesión",
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "jobTitleRequired": "El cargo es obligatorio",
+      "emailRequired": "El correo es obligatorio",
+      "emailInvalid": "El correo no tiene un formato válido",
+      "passwordRequired": "La contraseña es obligatoria",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+      "confirmPasswordRequired": "Confirma la contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden"
+    },
+    "error": {
+      "emailTaken": "Ese correo ya está registrado",
       "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
     }
   }

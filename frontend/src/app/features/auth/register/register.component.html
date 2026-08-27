@@ -1,0 +1,176 @@
+<div
+  class="min-h-[calc(100vh-4rem)] w-full bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-slate-100 flex items-center justify-center p-6"
+>
+  <div
+    class="w-full max-w-md bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-2xl shadow-sm p-6 md:p-8 space-y-6"
+  >
+    <!-- Encabezado -->
+    <div class="space-y-1 text-center">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        {{ 'register.title' | translate }}
+      </h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'register.subtitle' | translate }}
+      </p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+      <!-- Campo: nombre -->
+      <div class="space-y-1">
+        <label for="name" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {{ 'register.name' | translate }}
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          autocomplete="name"
+          [placeholder]="'register.namePlaceholder' | translate"
+          class="w-full rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60"
+        />
+        <!-- Validación: nombre obligatorio -->
+        <p
+          *ngIf="form.controls.name.touched && form.controls.name.hasError('required')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.nameRequired' | translate }}
+        </p>
+      </div>
+
+      <!-- Campo: cargo -->
+      <div class="space-y-1">
+        <label for="jobTitle" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {{ 'register.jobTitle' | translate }}
+        </label>
+        <input
+          id="jobTitle"
+          type="text"
+          formControlName="jobTitle"
+          autocomplete="organization-title"
+          [placeholder]="'register.jobTitlePlaceholder' | translate"
+          class="w-full rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60"
+        />
+        <!-- Validación: cargo obligatorio -->
+        <p
+          *ngIf="form.controls.jobTitle.touched && form.controls.jobTitle.hasError('required')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.jobTitleRequired' | translate }}
+        </p>
+      </div>
+
+      <!-- Campo: correo -->
+      <div class="space-y-1">
+        <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {{ 'register.email' | translate }}
+        </label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          [placeholder]="'register.emailPlaceholder' | translate"
+          class="w-full rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60"
+        />
+        <!-- Validación: correo obligatorio -->
+        <p
+          *ngIf="form.controls.email.touched && form.controls.email.hasError('required')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.emailRequired' | translate }}
+        </p>
+        <!-- Validación: formato de correo -->
+        <p
+          *ngIf="form.controls.email.touched && form.controls.email.hasError('email')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.emailInvalid' | translate }}
+        </p>
+      </div>
+
+      <!-- Campo: contraseña -->
+      <div class="space-y-1">
+        <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {{ 'register.password' | translate }}
+        </label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          [placeholder]="'register.passwordPlaceholder' | translate"
+          class="w-full rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60"
+        />
+        <!-- Validación: contraseña obligatoria -->
+        <p
+          *ngIf="form.controls.password.touched && form.controls.password.hasError('required')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.passwordRequired' | translate }}
+        </p>
+        <!-- Validación: longitud mínima de contraseña -->
+        <p
+          *ngIf="form.controls.password.touched && form.controls.password.hasError('minlength')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.passwordMinLength' | translate }}
+        </p>
+      </div>
+
+      <!-- Campo: confirmar contraseña -->
+      <div class="space-y-1">
+        <label for="confirmPassword" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {{ 'register.confirmPassword' | translate }}
+        </label>
+        <input
+          id="confirmPassword"
+          type="password"
+          formControlName="confirmPassword"
+          autocomplete="new-password"
+          [placeholder]="'register.confirmPasswordPlaceholder' | translate"
+          class="w-full rounded-xl border border-light-border dark:border-dark-border bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60"
+        />
+        <!-- Validación: confirmación obligatoria -->
+        <p
+          *ngIf="form.controls.confirmPassword.touched && form.controls.confirmPassword.hasError('required')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.confirmPasswordRequired' | translate }}
+        </p>
+        <!-- Validación: las contraseñas no coinciden -->
+        <p
+          *ngIf="form.controls.confirmPassword.touched && form.hasError('passwordMismatch')"
+          class="text-xs text-rose-500"
+        >
+          {{ 'register.validation.passwordMismatch' | translate }}
+        </p>
+      </div>
+
+      <!-- Estado de error: email ya registrado o fallo de red -->
+      <div
+        *ngIf="status() === 'error'"
+        class="rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-sm px-3 py-2"
+      >
+        {{ errorKey() | translate }}
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="status() === 'loading'"
+        class="w-full rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <!-- Texto del botón según el estado -->
+        <span *ngIf="status() !== 'loading'">{{ 'register.submit' | translate }}</span>
+        <span *ngIf="status() === 'loading'">{{ 'register.loading' | translate }}</span>
+      </button>
+    </form>
+
+    <!-- Enlace a la pantalla de inicio de sesión -->
+    <p class="text-center text-sm text-slate-500 dark:text-slate-400">
+      {{ 'register.hasAccount' | translate }}
+      <a routerLink="/login" class="font-semibold text-brand-600 hover:text-brand-700">
+        {{ 'register.link' | translate }}
+      </a>
+    </p>
+  </div>
+</div>

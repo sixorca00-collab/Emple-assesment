@@ -7,7 +7,7 @@ import {
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { LoginComponent } from './login.component';
-import { API_BASE_URL } from '../../shared/config/api.config';
+import { API_BASE_URL } from '../../../shared/config/api.config';
 
 describe('LoginComponent', () => {
   let http: HttpTestingController;

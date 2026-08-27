@@ -22,6 +22,8 @@
     "passwordPlaceholder": "Your password",
     "submit": "Sign in",
     "loading": "Signing in...",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create account",
     "validation": {
       "emailRequired": "Email is required",
       "emailInvalid": "Email format is not valid",
@@ -29,6 +31,38 @@
     },
     "error": {
       "invalid": "Wrong email or password",
+      "network": "Could not reach the server. Please try again."
+    }
+  },
+  "register": {
+    "title": "Create account",
+    "subtitle": "Sign up for the Riwi messaging platform",
+    "name": "Full name",
+    "namePlaceholder": "Ana Ruiz",
+    "jobTitle": "Job title",
+    "jobTitlePlaceholder": "Software developer",
+    "email": "Email",
+    "emailPlaceholder": "your.email@riwi.io",
+    "password": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Repeat the password",
+    "submit": "Sign up",
+    "loading": "Creating account...",
+    "hasAccount": "Already have an account?",
+    "link": "Sign in",
+    "validation": {
+      "nameRequired": "Name is required",
+      "jobTitleRequired": "Job title is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Email format is not valid",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm the password",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "error": {
+      "emailTaken": "That email is already registered",
       "network": "Could not reach the server. Please try again."
     }
   }
