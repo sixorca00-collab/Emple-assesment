@@ -1,0 +1,862 @@
+openapi: 3.0.1
+info:
+  contact:
+    email: dev@riwi.io
+    name: Riwi Co. Backend
+  description: "API REST de la plataforma de mensajeria interna Riwi Co.: auth con\
+    \ JWT, canales, mensajes, busqueda full-text y copiloto RAG."
+  license:
+    name: Proprietary - uso interno Riwi Co.
+  title: Riwi Messaging API
+  version: 0.1.0
+servers:
+- url: http://localhost:8080
+security:
+- bearer-jwt: []
+tags:
+- description: "Conversaciones, canales, miembros e historial de mensajes"
+  name: Canales
+- description: "Copiloto RAG: recuperacion limitada por permisos, historial y consumo\
+    \ de tokens"
+  name: Copiloto
+- description: Edicion y borrado logico de mensajes
+  name: Mensajes
+- description: Sondas operativas publicas
+  name: Infra
+- description: "Operaciones de plataforma: SOLO platform admin (claim del JWT)"
+  name: Interno
+- description: Busqueda full-text de mensajes
+  name: Busqueda
+- description: "Autenticacion: login, registro, rotacion de refresh y logout. Operaciones\
+    \ sin Bearer."
+  name: Auth
+- description: Datos del usuario autenticado
+  name: Perfil
+paths:
+  /auth/login:
+    post:
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+          description: Par de tokens emitido
+        "401":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Credenciales invalidas
+      summary: Inicia sesion y emite un par access/refresh
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      operationId: logout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogoutRequest"
+        required: true
+      responses:
+        "204":
+          description: Refresh revocado (idempotente)
+      summary: Revoca el refresh token presentado
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      operationId: refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+        required: true
+      responses:
+        "401":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Refresh invalido, expirado o reutilizado"
+      summary: Rota el refresh token y emite un par nuevo
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+          description: Cuenta creada y par de tokens emitido
+        "409":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El correo ya pertenece a un usuario vigente
+      summary: Registra una cuenta y devuelve tokens (auto-login)
+      tags:
+      - Auth
+  /channels:
+    get:
+      operationId: list
+      parameters:
+      - in: query
+        name: cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: size
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageResponseConversationResponse"
+          description: OK
+      summary: Lista las conversaciones del actor con keyset pagination
+      tags:
+      - Canales
+    post:
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChannelRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ChannelResponse"
+          description: Canal creado
+      summary: Crea un canal; el actor queda como owner
+      tags:
+      - Canales
+  /channels/{channelId}/members:
+    post:
+      operationId: addMember
+      parameters:
+      - in: path
+        name: channelId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddMemberRequest"
+        required: true
+      responses:
+        "204":
+          description: Miembro agregado
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no es owner/admin del canal
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Canal o usuario inexistente
+      summary: Agrega un miembro al canal (solo owner/admin del canal)
+      tags:
+      - Canales
+  /channels/{channelId}/messages:
+    get:
+      operationId: history_1
+      parameters:
+      - in: path
+        name: channelId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: size
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no es miembro del canal
+      summary: Historial de mensajes del canal con keyset pagination
+      tags:
+      - Canales
+    post:
+      operationId: post
+      parameters:
+      - in: path
+        name: channelId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostMessageRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+          description: Mensaje publicado
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no es miembro del canal
+      summary: Publica un mensaje en el canal y emite el evento en tiempo real
+      tags:
+      - Canales
+  /channels/{channelId}/read:
+    post:
+      operationId: read
+      parameters:
+      - in: path
+        name: channelId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MarkReadResponse"
+          description: OK
+      summary: Marca como leidos los mensajes ajenos vivos del canal
+      tags:
+      - Canales
+  /copilot/history:
+    get:
+      operationId: history
+      parameters:
+      - in: query
+        name: cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: size
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageResponseCopilotHistoryResponse"
+          description: OK
+      summary: Historial de consultas del propio actor con keyset pagination
+      tags:
+      - Copiloto
+  /copilot/query:
+    post:
+      operationId: query
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CopilotQueryRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CopilotQueryResponse"
+          description: "Respuesta con citas, o negativa honesta si no hay contexto"
+        "401":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Falta el Bearer o es invalido
+      summary: Pregunta al copiloto; solo usa contexto de canales donde el actor es
+        miembro
+      tags:
+      - Copiloto
+  /copilot/usage:
+    get:
+      operationId: usage
+      parameters:
+      - in: query
+        name: userId
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: from
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: to
+        required: false
+        schema:
+          type: string
+          format: date-time
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CopilotUsageResponse"
+          description: OK
+      summary: "Consumo de tokens del copiloto; el actor ve lo suyo, platform admin\
+        \ desglosa por usuario"
+      tags:
+      - Copiloto
+  /health:
+    get:
+      operationId: health
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+          description: OK
+      summary: Liveness del backend
+      tags:
+      - Infra
+  /internal/embeddings/backfill:
+    post:
+      operationId: backfill
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BackfillResponse"
+          description: Resumen del backfill
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no es platform admin
+      summary: Genera en lote los embeddings faltantes (solo platform admin)
+      tags:
+      - Interno
+  /me:
+    get:
+      operationId: me
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+          description: Perfil del actor
+        "401":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Falta el Bearer o es invalido
+      summary: Perfil del usuario autenticado y conteo de conversaciones visibles
+      tags:
+      - Perfil
+  /messages/search:
+    get:
+      operationId: search
+      parameters:
+      - in: query
+        name: q
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: channelId
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: size
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "400":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Termino de busqueda invalido
+      summary: "Busqueda full-text de mensajes con resaltado, limitada por RLS a canales\
+        \ del actor"
+      tags:
+      - Busqueda
+  /messages/{messageId}:
+    delete:
+      operationId: delete
+      parameters:
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Mensaje marcado como borrado
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no es el autor del mensaje
+      summary: "Borra logicamente un mensaje (soft delete, nunca fisico)"
+      tags:
+      - Mensajes
+    patch:
+      operationId: edit
+      parameters:
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditMessageRequest"
+        required: true
+      responses:
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no es el autor del mensaje
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Mensaje inexistente
+        "409":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El mensaje esta borrado
+      summary: Edita un mensaje (solo el autor)
+      tags:
+      - Mensajes
+components:
+  schemas:
+    AddMemberRequest:
+      type: object
+      properties:
+        role:
+          type: string
+        userId:
+          type: string
+          format: uuid
+      required:
+      - userId
+    BackfillResponse:
+      type: object
+      properties:
+        failed:
+          type: integer
+          format: int32
+        processed:
+          type: integer
+          format: int32
+        skipped:
+          type: boolean
+    ChannelResponse:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        id:
+          type: string
+          format: uuid
+        isPrivate:
+          type: boolean
+        myRole:
+          type: string
+        name:
+          type: string
+    ConversationResponse:
+      type: object
+      properties:
+        channelId:
+          type: string
+          format: uuid
+        channelName:
+          type: string
+        isPrivate:
+          type: boolean
+        lastMessageAt:
+          type: string
+          format: date-time
+        lastMessageId:
+          type: string
+          format: uuid
+        lastMessagePreview:
+          type: string
+        lastMessageSenderId:
+          type: string
+          format: uuid
+        myRole:
+          type: string
+        unreadCount:
+          type: integer
+          format: int64
+    CopilotCitationResponse:
+      type: object
+      properties:
+        channelId:
+          type: string
+          format: uuid
+        messageId:
+          type: string
+          format: uuid
+        rank:
+          type: integer
+          format: int32
+        snippet:
+          type: string
+    CopilotHistoryResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+        completionTokens:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        model:
+          type: string
+        promptTokens:
+          type: integer
+          format: int32
+        question:
+          type: string
+        status:
+          type: string
+        totalTokens:
+          type: integer
+          format: int32
+    CopilotQueryRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          maxLength: 4000
+          minLength: 0
+      required:
+      - question
+    CopilotQueryResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/CopilotCitationResponse"
+        status:
+          type: string
+        usage:
+          $ref: "#/components/schemas/UsageView"
+    CopilotUsageResponse:
+      type: object
+      properties:
+        answeredCount:
+          type: integer
+          format: int64
+        completionTokens:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        errorCount:
+          type: integer
+          format: int64
+        jobTitle:
+          type: string
+        lastQueryAt:
+          type: string
+          format: date-time
+        promptTokens:
+          type: integer
+          format: int64
+        queryCount:
+          type: integer
+          format: int64
+        refusedCount:
+          type: integer
+          format: int64
+        totalTokens:
+          type: integer
+          format: int64
+        userId:
+          type: string
+          format: uuid
+    CreateChannelRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 500
+          minLength: 0
+        isPrivate:
+          type: boolean
+        name:
+          type: string
+          maxLength: 80
+          minLength: 2
+      required:
+      - name
+    EditMessageRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 8000
+          minLength: 1
+      required:
+      - body
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        correlationId:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+      - email
+      - password
+    LogoutRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required:
+      - refreshToken
+    MarkReadResponse:
+      type: object
+      properties:
+        markedRead:
+          type: integer
+          format: int32
+    MeResponse:
+      type: object
+      properties:
+        displayName:
+          type: string
+        email:
+          type: string
+        jobTitle:
+          type: string
+        platformAdmin:
+          type: boolean
+        visibleConversationCount:
+          type: integer
+          format: int64
+    MessageResponse:
+      type: object
+      properties:
+        body:
+          type: string
+        channelId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        editedAt:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        senderName:
+          type: string
+        status:
+          type: string
+    PageResponseConversationResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationResponse"
+        nextCursor:
+          type: string
+    PageResponseCopilotHistoryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CopilotHistoryResponse"
+        nextCursor:
+          type: string
+    PostMessageRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 8000
+          minLength: 1
+        clientNonce:
+          type: string
+          format: uuid
+      required:
+      - body
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required:
+      - refreshToken
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        jobTitle:
+          type: string
+          maxLength: 80
+          minLength: 2
+        name:
+          type: string
+          maxLength: 80
+          minLength: 2
+        password:
+          type: string
+          maxLength: 72
+          minLength: 8
+      required:
+      - email
+      - jobTitle
+      - name
+      - password
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresInSeconds:
+          type: integer
+          format: int64
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+    UsageView:
+      type: object
+      properties:
+        completionTokens:
+          type: integer
+          format: int32
+        promptTokens:
+          type: integer
+          format: int32
+        totalTokens:
+          type: integer
+          format: int32
+  securitySchemes:
+    bearer-jwt:
+      bearerFormat: JWT
+      in: header
+      name: Authorization
+      scheme: bearer
+      type: http
