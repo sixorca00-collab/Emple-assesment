@@ -22,6 +22,8 @@
         <!-- Java 21: los records de 21 son la base de todos los DTOs -->
         <java.version>21</java.version>
         <jjwt.version>0.12.6</jjwt.version>
+        <!-- springdoc 2.6.x es la linea compatible con Spring Boot 3.3.x -->
+        <springdoc.version>2.6.0</springdoc.version>
         <!-- override sobre la version que gestiona Spring Boot: el docker-java de 1.19.x negocia una API demasiado vieja -->
         <testcontainers.version>1.20.4</testcontainers.version>
     </properties>
@@ -56,6 +58,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- documentacion OpenAPI 3 + Swagger UI servido por el propio backend -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <!-- migraciones SQL plano numerado -->
