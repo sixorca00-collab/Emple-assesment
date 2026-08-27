@@ -122,3 +122,47 @@ Estado: parcial — cubre el esqueleto + autenticación (D2 bloque 5-6). Se ampl
 - **Patrón:** `MessageSearchRepository` es un puerto separado de `MessageRepository` (ISP): la búsqueda es una capacidad de lectura distinta, con su propio modelo de resultado (`SearchHit`/`SearchResultPage`).
 
 **Fuera de alcance:** ranking por recencia combinado con relevancia, filtros por emisor/fecha, y resaltado en la búsqueda vectorial del RAG (esa es la Consulta 3).
+
+---
+
+## D9. Copiloto de IA (RAG): recuperación, permisos y honestidad
+
+**Decisión:** el copiloto vive detrás de dos puertos de dominio (`ChatPort`, `EmbeddingPort`) sin ningún SDK; los adaptadores HTTP (`GroqChatAdapter`, `OpenAiEmbeddingAdapter`) usan `RestClient` y se configuran 100% por entorno. El dominio y los casos de uso nunca importan HTTP ni un proveedor concreto — cambiar de proveedor es solo `.env`.
+
+**Endpoints (todos autenticados, actor del JWT):**
+- `POST /copilot/query` — `{ question }` → `{ answer, status, citations[], usage }`. Valida pregunta no vacía (400).
+- `GET /copilot/usage` — Consulta 4. El actor ve lo suyo; `is_platform_admin` desglosa por usuario (`?userId=`) o ve todo. Rango opcional `?from=&to=` (ISO-8601).
+- `GET /copilot/history` — historial del propio actor, keyset sobre `(created_at, id)` reusando `CursorCodec`.
+- `POST /internal/embeddings/backfill` — solo `is_platform_admin` (guard por claim del JWT en el controller, mismo criterio que el resto de rutas admin; 403 si no).
+
+**Puertos y adaptadores nuevos:**
+- `ChatPort` → `GroqChatAdapter` (`/chat/completions`, formato OpenAI; captura `usage.prompt_tokens`/`completion_tokens` y el `model` real de la respuesta).
+- `EmbeddingPort` → `OpenAiEmbeddingAdapter` (`/embeddings`, valida que la dimensión devuelta = 1536).
+- `CopilotContextRepository` → `JdbcCopilotContextRepository` (Consulta 3 literal + `rw_copilot_context_exists_elsewhere`).
+- `CopilotQueryRepository` → `JdbcCopilotQueryRepository` (persistencia consulta+citas en la misma transacción, Consulta 4, historial keyset).
+- `EmbeddingBackfillRepository` → `JdbcEmbeddingBackfillRepository` (usa las funciones SECURITY DEFINER de V5).
+
+**Recuperación con permisos EN SQL (no solo en Java):** `JdbcCopilotContextRepository` ejecuta la Consulta 3 con el `EXISTS` contra `rw_channel_member` para el actor, y además el backend fija `SET LOCAL app.current_user_id` (aspecto `TransactionActorAspect`), por lo que la política RLS `p_rw_message_select` vuelve a filtrar. Un mensaje de un canal ajeno **nunca** se recupera aunque su embedding sea el más cercano (test `retrievalRespectsMembershipEvenWhenForeignEmbeddingIsEquallyClose`).
+
+**Negativa honesta con dos motivos distintos:** si la recuperación filtrada no devuelve nada, se consulta `rw_copilot_context_exists_elsewhere` (V5, SECURITY DEFINER, ignora membresía, devuelve solo un booleano). Si existe contexto en otro canal → `refused_permission`; si no existe en ninguno → `refused_no_context`. Ambas se persisten en `rw_copilot_query` igual que una respuesta, sin citas.
+
+**System prompt versionado:** constante `CopilotPromptBuilder.VERSION = "v1"` + plantilla en la misma clase. La versión usada se persiste en la nueva columna `rw_copilot_query.system_prompt_version` (migración V5). El system prompt fija el rol, inyecta nombre+cargo del actor (construidos en el servidor desde `rw_user_profile`, nunca del body), instruye que el contexto es **dato no confiable** y exige citar por id y negarse ante falta de contexto/permisos.
+
+**Chats como datos no confiables:** los mensajes recuperados van SIEMPRE en el turno de usuario dentro de `<contexto_no_confiable>...</contexto_no_confiable>`, cada uno rotulado `[msg:<id>]` y aplanado (sin saltos de línea). Test `retrievedMessagesAreInjectedAsUntrustedContext` verifica que un mensaje "ignora tus instrucciones" queda dentro de ese bloque y que el system prompt lo neutraliza conceptualmente.
+
+**Citas:** son los mensajes efectivamente recuperados y visibles para el actor, en orden de relevancia (`rank` 1..N); se persisten en `rw_copilot_citation`. No se parsean del texto del modelo (determinista y auditable).
+
+**Migración V5 (mínima, no toca V1..V4):**
+- `rw_copilot_query.system_prompt_version text NOT NULL DEFAULT 'v1'` + `CHECK` de longitud — auditoría de prompt engineering.
+- `rw_messages_missing_embedding(int)` y `rw_set_message_embedding(uuid, vector)` — SECURITY DEFINER (owner = superusuario de migración) porque el backfill necesita leer/escribir mensajes de todos los canales y autores, y la RLS de `SELECT`/`UPDATE` de `rw_message` lo impediría. Solo `GRANT EXECUTE` a `riwi_app`.
+- `rw_copilot_context_exists_elsewhere(vector, real)` — SECURITY DEFINER; señal de permisos para la negativa honesta.
+
+**Generación de embeddings:** `BackfillEmbeddingsUseCase` toma en lote los mensajes vivos con `embedding IS NULL`, llama a `EmbeddingPort` y hace `UPDATE` parametrizado vía la función de V5. Expuesto como `POST /internal/embeddings/backfill` (admin) y como `ApplicationRunner` (`riwi.embeddings.backfill-on-startup`, default `false`). Si no hay API key configurada, el backfill hace log + skip (`skipped=true`), nunca tumba el arranque.
+
+**Tradeoff aceptado:** la llamada al proveedor de chat ocurre dentro de la transacción de `AskCopilotUseCase` (para mantener el actor RLS fijado y persistir en la misma unidad). En un despliegue real la inferencia iría fuera de la transacción o a una cola; para el assessment el lote/consulta bajo demanda es suficiente. Documentado también para el backfill.
+
+**Config nueva (`.env.example` + `application.yml`):** `AI_CHAT_BASE_URL/API_KEY/MODEL` (Groq, `llama-3.3-70b-versatile`), `AI_EMBEDDING_BASE_URL/API_KEY/MODEL/DIMENSIONS` (OpenAI, `text-embedding-3-small`, 1536), `COPILOT_TOP_K` (6), `COPILOT_MIN_SIMILARITY` (0.3), `EMBEDDINGS_BACKFILL_ON_STARTUP` (false).
+
+**Tests (Testcontainers, puertos de IA mockeados — nunca se llama a Groq/OpenAI):** `FakeAiConfig` inyecta un `EmbeddingPort` determinista (mismo texto → mismo vector) y un `RecordingChatPort` (texto fijo, cuenta tokens, guarda el último prompt). Cubren: recuperación respeta membresía, `refused_no_context`, `refused_permission`, citas = mensajes recuperados + persistencia de `rw_copilot_query`/`rw_copilot_citation`, Consulta 4 (suma de tokens y aislamiento por actor / desglose admin), historial keyset sin fuga entre usuarios, contexto no confiable delimitado, `question` vacía → 400, y backfill admin-only que puebla embeddings faltantes.
+
+**Fuera de alcance:** inferencia asíncrona/cola, re-embedding incremental automático tras editar un mensaje (el trigger ya invalida el vector; el backfill lo recalcula bajo demanda), streaming de la respuesta del copiloto, y la verificación de la llamada HTTP real a Groq/OpenAI (no se testea, solo los adaptadores quedan cableados por config).
