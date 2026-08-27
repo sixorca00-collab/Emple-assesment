@@ -1,7 +1,6 @@
 package com.riwi.messaging.infrastructure.security;
 
 import com.riwi.messaging.domain.port.AccessTokenPort;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,17 +12,12 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
 // cadena de seguridad stateless: /auth/** y /health publicas, el resto autenticado
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    // origenes del frontend permitidos: lista separada por comas desde CORS_ALLOWED_ORIGINS
-    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:14200}")
-    private String allowedOrigins;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -53,20 +47,19 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // configuracion CORS para las llamadas cross-origin del frontend servido por nginx
+    // CORS abierto: el frontend (nginx en otro puerto) llama a la API cross-origin.
+    // El backend es stateless y autentica por header Authorization (Bearer), no por cookies,
+    // asi que allowCredentials va en false y eso permite usar "*" como origen sin restriccion.
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // patrones (no origenes exactos) para tolerar puertos/hosts de dev con credenciales
-        config.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isEmpty())
-                .toList());
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Correlation-Id"));
+        // cualquier origen: sirve para localhost:4200/14200, 127.0.0.1, o un host en la LAN
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("X-Correlation-Id"));
-        // el front manda Authorization; no usa cookies pero lo permitimos por si acaso
-        config.setAllowCredentials(true);
+        // sin cookies de sesion: no se envian credenciales
+        config.setAllowCredentials(false);
         // cacheamos el preflight ~1h
         config.setMaxAge(3600L);
 
