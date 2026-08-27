@@ -2,10 +2,13 @@ package com.riwi.messaging.interfaces.rest;
 
 import com.riwi.messaging.domain.exception.AuthenticationFailedException;
 import com.riwi.messaging.domain.exception.DomainException;
+import com.riwi.messaging.domain.exception.InvalidStateException;
 import com.riwi.messaging.domain.exception.InvalidTokenException;
+import com.riwi.messaging.domain.exception.NotAuthorizedException;
 import com.riwi.messaging.domain.exception.ResourceNotFoundException;
 import com.riwi.messaging.domain.exception.TokenReuseDetectedException;
 import com.riwi.messaging.interfaces.rest.dto.ErrorResponse;
+import com.riwi.messaging.interfaces.rest.support.InvalidCursorException;
 import com.riwi.messaging.interfaces.web.CorrelationIdFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
         return build(HttpStatus.NOT_FOUND, ex.code(), ex.getMessage());
+    }
+
+    @ExceptionHandler(NotAuthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(NotAuthorizedException ex) {
+        // permiso denegado por una funcion de BD (SQLSTATE 42501) o por el guard de membresia
+        return build(HttpStatus.FORBIDDEN, ex.code(), ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidStateException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(InvalidStateException ex) {
+        // estado invalido para la operacion (SQLSTATE 55000), p.ej. editar un mensaje borrado
+        return build(HttpStatus.CONFLICT, ex.code(), ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCursorException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCursor(InvalidCursorException ex) {
+        return build(HttpStatus.BAD_REQUEST, "INVALID_CURSOR", ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
