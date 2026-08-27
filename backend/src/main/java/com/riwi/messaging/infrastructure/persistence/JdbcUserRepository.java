@@ -26,6 +26,33 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     @Override
+    public UUID create(String email, String passwordHash, String displayName, String jobTitle) {
+        // insertamos las credenciales; is_platform_admin/is_active toman su default (false/true)
+        String insertUser = """
+                INSERT INTO rw_user (email, password_hash, is_platform_admin, is_active)
+                VALUES (:email, :passwordHash, false, true)
+                RETURNING id
+                """;
+        var userParams = new MapSqlParameterSource()
+                .addValue("email", email)
+                .addValue("passwordHash", passwordHash);
+        UUID userId = jdbc.queryForObject(insertUser, userParams, UUID.class);
+
+        // perfil 1:1 en la misma transaccion
+        String insertProfile = """
+                INSERT INTO rw_user_profile (user_id, display_name, job_title)
+                VALUES (:userId, :displayName, :jobTitle)
+                """;
+        var profileParams = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("displayName", displayName)
+                .addValue("jobTitle", jobTitle);
+        jdbc.update(insertProfile, profileParams);
+
+        return userId;
+    }
+
+    @Override
     public Optional<User> findByEmail(String email) {
         // buscamos al usuario vigente por correo sin distinguir mayusculas
         String sql = "SELECT " + USER_COLUMNS + " FROM rw_user WHERE lower(email) = lower(:email) AND deleted_at IS NULL";

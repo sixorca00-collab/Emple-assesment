@@ -2,6 +2,7 @@ package com.riwi.messaging.interfaces.rest;
 
 import com.riwi.messaging.domain.exception.AuthenticationFailedException;
 import com.riwi.messaging.domain.exception.DomainException;
+import com.riwi.messaging.domain.exception.EmailAlreadyRegisteredException;
 import com.riwi.messaging.domain.exception.InvalidInputException;
 import com.riwi.messaging.domain.exception.InvalidStateException;
 import com.riwi.messaging.domain.exception.InvalidTokenException;
@@ -43,6 +44,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleForbidden(NotAuthorizedException ex) {
         // permiso denegado por una funcion de BD (SQLSTATE 42501) o por el guard de membresia
         return build(HttpStatus.FORBIDDEN, ex.code(), ex.getMessage());
+    }
+
+    @ExceptionHandler(EmailAlreadyRegisteredException.class)
+    public ResponseEntity<ErrorResponse> handleEmailTaken(EmailAlreadyRegisteredException ex) {
+        // el correo ya pertenece a un usuario vigente: 409
+        return build(HttpStatus.CONFLICT, ex.code(), ex.getMessage());
     }
 
     @ExceptionHandler(InvalidStateException.class)
