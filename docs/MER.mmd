@@ -1,0 +1,108 @@
+%% MER - Plataforma de mensajeria Riwi Co. | PostgreSQL 16 + pgvector | 3FN
+%% Render a PNG:  npx -y @mermaid-js/mermaid-cli -i MER.mmd -o MER.png -s 3 -b white -p pptr.json
+%% (pptr.json: {"args":["--no-sandbox"]})   o pegar en https://mermaid.live y exportar PNG
+erDiagram
+    rw_user ||--|| rw_user_profile : "tiene"
+    rw_user ||--o{ rw_channel : "crea (created_by)"
+    rw_user ||--o{ rw_channel_member : "pertenece"
+    rw_channel ||--o{ rw_channel_member : "agrupa"
+    rw_channel ||--o{ rw_message : "contiene"
+    rw_user ||--o{ rw_message : "envia (sender_id)"
+    rw_user |o--o{ rw_message : "borra soft (deleted_by)"
+    rw_message ||--o{ rw_message_read_receipt : "es leido en"
+    rw_user ||--o{ rw_message_read_receipt : "marca leido"
+    rw_user ||--o{ rw_copilot_query : "consulta"
+    rw_copilot_query ||--o{ rw_copilot_citation : "cita"
+    rw_message ||--o{ rw_copilot_citation : "es citado en"
+    rw_user ||--o{ rw_refresh_token : "posee"
+    rw_refresh_token |o--o| rw_refresh_token : "es rotado por (replaced_by)"
+
+    rw_user {
+        uuid id PK
+        text email UK "unico parcial: lower(email) WHERE deleted_at IS NULL"
+        text password_hash "CHECK len >= 20"
+        boolean is_platform_admin "default false"
+        boolean is_active "default true"
+        timestamptz created_at "UTC, default now()"
+        timestamptz updated_at "UTC"
+        timestamptz deleted_at "nullable (soft delete)"
+    }
+
+    rw_user_profile {
+        uuid user_id PK "FK -> rw_user.id  ON DELETE CASCADE (1:1)"
+        text display_name "CHECK len 2..80"
+        text job_title "CHECK len 2..80"
+        text avatar_url "nullable"
+        text bio "nullable"
+        timestamptz updated_at "UTC"
+    }
+
+    rw_channel {
+        uuid id PK
+        text name UK "unico parcial: lower(name) WHERE deleted_at IS NULL"
+        text description "nullable"
+        boolean is_private "default false"
+        uuid created_by FK "-> rw_user.id  ON DELETE RESTRICT"
+        timestamptz created_at "UTC"
+        timestamptz updated_at "UTC"
+        timestamptz deleted_at "nullable (soft delete)"
+    }
+
+    rw_channel_member {
+        uuid channel_id PK "FK -> rw_channel.id  ON DELETE CASCADE"
+        uuid user_id PK "FK -> rw_user.id  ON DELETE CASCADE"
+        text role "CHECK in (owner, admin, member), default member"
+        timestamptz joined_at "UTC"
+    }
+
+    rw_message {
+        uuid id PK
+        uuid channel_id FK "-> rw_channel.id  ON DELETE CASCADE"
+        uuid sender_id FK "-> rw_user.id  ON DELETE RESTRICT"
+        text body "CHECK len 1..8000"
+        text status "CHECK in (pending, sent, failed), default sent"
+        uuid client_nonce "nullable, unico parcial (sender_id, client_nonce)"
+        timestamptz created_at "UTC"
+        timestamptz edited_at "nullable"
+        timestamptz deleted_at "nullable (soft delete)"
+        uuid deleted_by FK "-> rw_user.id  ON DELETE SET NULL, nullable"
+        tsvector search_tsv "nullable, mantenido por trigger"
+        vector embedding "vector(1536), nullable, RAG"
+    }
+
+    rw_message_read_receipt {
+        uuid message_id PK "FK -> rw_message.id  ON DELETE CASCADE"
+        uuid user_id PK "FK -> rw_user.id  ON DELETE CASCADE"
+        timestamptz read_at "UTC"
+    }
+
+    rw_copilot_query {
+        uuid id PK
+        uuid user_id FK "-> rw_user.id  ON DELETE CASCADE"
+        text question "CHECK len 1..4000"
+        text answer "nullable"
+        text model
+        integer prompt_tokens "CHECK >= 0, default 0"
+        integer completion_tokens "CHECK >= 0, default 0"
+        integer total_tokens "GENERATED (prompt + completion)"
+        text status "CHECK in (answered, refused_no_context, refused_permission, error)"
+        text system_prompt_version "CHECK len 1..20, default v1"
+        timestamptz created_at "UTC"
+    }
+
+    rw_copilot_citation {
+        uuid query_id PK "FK -> rw_copilot_query.id  ON DELETE CASCADE"
+        uuid message_id PK "FK -> rw_message.id  ON DELETE RESTRICT"
+        integer rank "CHECK >= 1, default 1"
+        timestamptz created_at "UTC"
+    }
+
+    rw_refresh_token {
+        uuid id PK
+        uuid user_id FK "-> rw_user.id  ON DELETE CASCADE"
+        text token_hash UK "solo se guarda el hash"
+        timestamptz issued_at "UTC"
+        timestamptz expires_at "CHECK > issued_at"
+        timestamptz revoked_at "nullable"
+        uuid replaced_by FK "-> rw_refresh_token.id  ON DELETE SET NULL, nullable (auto-ref)"
+    }

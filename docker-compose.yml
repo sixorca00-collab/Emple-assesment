@@ -64,10 +64,10 @@ services:
       SEARCH_TEXT_CONFIG: ${SEARCH_TEXT_CONFIG:-spanish}
       AI_CHAT_BASE_URL: ${AI_CHAT_BASE_URL:-https://api.groq.com/openai/v1}
       AI_CHAT_API_KEY: ${AI_CHAT_API_KEY:-}
-      AI_CHAT_MODEL: ${AI_CHAT_MODEL:-llama-3.3-70b-versatile}
-      AI_EMBEDDING_BASE_URL: ${AI_EMBEDDING_BASE_URL:-https://api.openai.com/v1}
+      AI_CHAT_MODEL: ${AI_CHAT_MODEL:-openai/gpt-oss-120b}
+      AI_EMBEDDING_BASE_URL: ${AI_EMBEDDING_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai}
       AI_EMBEDDING_API_KEY: ${AI_EMBEDDING_API_KEY:-}
-      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-3-small}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-gemini-embedding-001}
       AI_EMBEDDING_DIMENSIONS: ${AI_EMBEDDING_DIMENSIONS:-1536}
       COPILOT_TOP_K: ${COPILOT_TOP_K:-6}
       COPILOT_MIN_SIMILARITY: ${COPILOT_MIN_SIMILARITY:-0.3}

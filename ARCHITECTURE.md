@@ -18,7 +18,7 @@ Arquitectura de la plataforma de mensajería Riwi Co.
                           v
               +-----------------------+        +------------------------+
               |  backend (Spring)     |  ----> |  Groq  (ChatPort)      |
-              |  :SERVER_PORT         |  ----> |  OpenAI/Gemini (Embed) |
+              |  :SERVER_PORT         |  ----> |  Gemini (EmbeddingPort)|
               |  se conecta como      |        +------------------------+
               |  riwi_app (RLS ON)    |
               +-----------+-----------+
@@ -139,7 +139,7 @@ Proceso de normalización 1FN → 2FN → 3FN: `db/NORMALIZACION.md`.
 | Quiero cambiar... | Toco... | No toco... |
 |---|---|---|
 | proveedor de chat (Groq → otro) | `AI_CHAT_BASE_URL/API_KEY/MODEL` en `.env` | dominio, casos de uso |
-| proveedor de embeddings (OpenAI → Gemini) | `AI_EMBEDDING_BASE_URL/API_KEY/MODEL/DIMENSIONS` | dominio, `ChatPort`/`EmbeddingPort` |
+| proveedor de embeddings (Gemini → OpenAI u otro) | `AI_EMBEDDING_BASE_URL/API_KEY/MODEL/DIMENSIONS` | dominio, `ChatPort`/`EmbeddingPort` |
 | acceso a datos (`JdbcTemplate` → jOOQ) | nuevos adaptadores en `infrastructure` | puertos del dominio |
 | broadcast en tiempo real (memoria → Redis pub/sub) | adaptador de `MessageBroadcastPort` | `PostMessageUseCase` |
 | dimensión del vector | `AI_EMBEDDING_DIMENSIONS` + `vector(N)` en una migración nueva | resto del backend |

@@ -46,9 +46,9 @@ Nunca se recorta: RLS, validación de permisos en BD, soft delete, keyset pagina
 
 ---
 
-## D4. Proveedor de IA: Groq (chat) + OpenAI (embeddings)
+## D4. Proveedor de IA: Groq (chat) + Gemini (embeddings)
 
-**Decisión:** el copiloto usa **Groq** para las respuestas de chat (compatible con el formato de API de OpenAI, solo cambia `base_url` y API key) y **OpenAI** (`text-embedding-3-small`) para los embeddings del RAG.
+**Decisión:** el copiloto usa **Groq** para las respuestas de chat (compatible con el formato de API de OpenAI, solo cambia `base_url` y API key) y un proveedor de embeddings aparte para el RAG. Ver la **actualización al cierre** más abajo: chat quedó en `openai/gpt-oss-120b` y embeddings en Gemini (`gemini-embedding-001`); la decisión original apuntaba a `llama-3.3-70b-versatile` + OpenAI `text-embedding-3-small`.
 
 **Justificación:**
 - Groq ofrece la inferencia más rápida del mercado sobre modelos abiertos (Llama 3.3 70B / Llama 3.1 8B) con límites gratuitos generosos (hasta 14,400 solicitudes/día en el modelo 8B), ideal para demos en vivo sin preocuparse por rate limits.
@@ -56,6 +56,10 @@ Nunca se recorta: RLS, validación de permisos en BD, soft delete, keyset pagina
 - Ambos quedan detrás de dos puertos (`ChatPort`, `EmbeddingPort`) en el dominio, cumpliendo el requisito de "proveedor de IA intercambiable" del punto 8 sin acoplar el dominio a ningún SDK concreto — cambiar cualquiera de los dos proveedores después es solo config (`.env`), no código.
 
 **Placeholder para el día de la jornada:** confirmar si Groq agregó soporte de embeddings antes de implementar (su catálogo cambia rápido); si no, mantener OpenAI como fallback ya decidido acá.
+
+**Actualización (cierre del proyecto):**
+- **Chat:** Groq deprecó los modelos Llama 3.x (`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`) durante el desarrollo. El copiloto pasó a `openai/gpt-oss-120b` (fallback `openai/gpt-oss-20b`, más rápido). Es el mismo endpoint y formato OpenAI: `ChatPort` y `GroqChatAdapter` no cambiaron, solo `AI_CHAT_MODEL` en config.
+- **Embeddings:** el proveedor por defecto pasó de OpenAI (`text-embedding-3-small`, requiere cuenta con tarjeta) a **Google AI Studio / Gemini** (`gemini-embedding-001`) vía su endpoint compatible con OpenAI (`https://generativelanguage.googleapis.com/v1beta/openai`), gratuito y sin tarjeta. `EmbeddingPort` y `OpenAiEmbeddingAdapter` no cambiaron: el adaptador ya enviaba `dimensions` (ver B1), así que `AI_EMBEDDING_DIMENSIONS=1536` recorta el vector de 3072 a 1536 y todo lo demás (DDL `vector(1536)`, tests) queda igual. Solo cambia `.env`.
 
 ---
 
@@ -161,7 +165,7 @@ Estado: parcial — cubre el esqueleto + autenticación (D2 bloque 5-6). Se ampl
 
 **Tradeoff aceptado:** la llamada al proveedor de chat ocurre dentro de la transacción de `AskCopilotUseCase` (para mantener el actor RLS fijado y persistir en la misma unidad). En un despliegue real la inferencia iría fuera de la transacción o a una cola; para el assessment el lote/consulta bajo demanda es suficiente. Documentado también para el backfill.
 
-**Config nueva (`.env.example` + `application.yml`):** `AI_CHAT_BASE_URL/API_KEY/MODEL` (Groq, `llama-3.3-70b-versatile`), `AI_EMBEDDING_BASE_URL/API_KEY/MODEL/DIMENSIONS` (OpenAI, `text-embedding-3-small`, 1536), `COPILOT_TOP_K` (6), `COPILOT_MIN_SIMILARITY` (0.3), `EMBEDDINGS_BACKFILL_ON_STARTUP` (false).
+**Config nueva (`.env.example` + `application.yml`):** `AI_CHAT_BASE_URL/API_KEY/MODEL` (Groq, `openai/gpt-oss-120b` — ver D4), `AI_EMBEDDING_BASE_URL/API_KEY/MODEL/DIMENSIONS` (Gemini, `gemini-embedding-001`, 1536 — ver D4), `COPILOT_TOP_K` (6), `COPILOT_MIN_SIMILARITY` (0.3), `EMBEDDINGS_BACKFILL_ON_STARTUP` (false).
 
 **Tests (Testcontainers, puertos de IA mockeados — nunca se llama a Groq/OpenAI):** `FakeAiConfig` inyecta un `EmbeddingPort` determinista (mismo texto → mismo vector) y un `RecordingChatPort` (texto fijo, cuenta tokens, guarda el último prompt). Cubren: recuperación respeta membresía, `refused_no_context`, `refused_permission`, citas = mensajes recuperados + persistencia de `rw_copilot_query`/`rw_copilot_citation`, Consulta 4 (suma de tokens y aislamiento por actor / desglose admin), historial keyset sin fuga entre usuarios, contexto no confiable delimitado, `question` vacía → 400, y backfill admin-only que puebla embeddings faltantes.
 
@@ -187,7 +191,7 @@ Estado: parcial — cubre el esqueleto + autenticación (D2 bloque 5-6). Se ampl
 - **B2 — modo `EMBEDDINGS_BACKFILL_MODE=missing|all`** (default `missing`). `all` re-embebe todos los mensajes vivos vía la nueva función `rw_messages_for_reembedding` (V6, SECURITY DEFINER) y sobrescribe los embeddings **sintéticos** que `seed_loader.sql` genera para los tests. No se tocó `seed_loader.sql` ni los tests existentes (siguen con `DeterministicEmbeddingPort` + vectores sintéticos); el modo `all` es aditivo.
 - **B3 — `GET /internal/copilot/status`** (solo `is_platform_admin`): `totalMessages`, `messagesWithEmbedding` (función V6 `rw_message_embedding_stats`), `embeddingModel`, `chatModel`, y `embeddingProviderReachable` / `chatProviderReachable` (ping real: un embedding de "ping" y un chat de un turno mínimo, `true` si respondió).
 - **B4 — `CopilotLiveIT`** anotado `@EnabledIfEnvironmentVariable` para `AI_CHAT_API_KEY` y `AI_EMBEDDING_API_KEY`: no corre en `mvn test` sin keys. Con keys: dimensión real == `AI_EMBEDDING_DIMENSIONS`, chat real con `usage` > 0, y end-to-end (seed → backfill `all` real → `POST /copilot/query`) con `answered`+citas para una pregunta del corpus y `refused_no_context` fuera de contexto. Comando: `mvn -f backend/pom.xml test -Dtest=CopilotLiveIT`.
-- **B5 — model id de Groq:** `.env.example` deja el comentario con el fallback `llama-3.1-8b-instant` (límite diario más alto) por si `llama-3.3-70b-versatile` está deprecado el día del demo.
+- **B5 — model id de Groq:** al cierre del proyecto Groq ya había retirado los modelos Llama 3.x. `.env.example`, `docker-compose.yml` y `application.yml` quedan con `openai/gpt-oss-120b` por defecto y el comentario apunta a `openai/gpt-oss-20b` como fallback más rápido. Ver la actualización en D4.
 
 **Migración nueva V6 (`db/migrations/V6__copilot_ops.sql`):** `rw_messages_for_reembedding(int)` y `rw_message_embedding_stats()`, ambas SECURITY DEFINER con `GRANT EXECUTE` solo a `riwi_app`. No toca V1..V5.
 
