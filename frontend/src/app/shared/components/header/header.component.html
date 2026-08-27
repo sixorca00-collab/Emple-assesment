@@ -34,5 +34,14 @@
   <span *ngIf="!themeService.isDarkMode()">🌙</span>
   <span *ngIf="themeService.isDarkMode()">☀️</span>
 </button>
+
+    <!-- Botón de cerrar sesión: solo visible con sesión activa -->
+    <button
+      *ngIf="auth.isLoggedIn()"
+      (click)="logout()"
+      class="px-3 py-2 rounded-lg text-xs font-semibold bg-brand-700 hover:bg-brand-600 transition-colors"
+    >
+      {{ 'auth.logout' | translate }}
+    </button>
   </div>
 </header>
