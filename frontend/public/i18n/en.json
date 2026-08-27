@@ -74,6 +74,32 @@
       "network": "Could not reach the server. Please try again."
     }
   },
+  "copilot": {
+    "title": "AI Copilot",
+    "historyTitle": "History",
+    "toggleHistory": "Show or hide the history",
+    "recentQueries": "Recent queries",
+    "historyError": "The history could not be loaded.",
+    "historyEmpty": "You haven't made any queries yet.",
+    "usageTitle": "Accumulated usage",
+    "usageError": "Usage could not be loaded.",
+    "usageEmpty": "No usage recorded.",
+    "usageQueries": "Queries",
+    "usageAnswered": "Answered",
+    "usageRefused": "Refused",
+    "usageTokens": "Total tokens",
+    "emptyState": "Ask the copilot something about your conversations.",
+    "inputPlaceholder": "Ask the copilot something...",
+    "thinking": "The copilot is processing the query...",
+    "askError": "The query could not be sent. Please try again.",
+    "citations": "Cited sources",
+    "status": {
+      "answered": "Answer",
+      "refused_no_context": "Not enough context",
+      "refused_permission": "No permission for that content",
+      "error": "Copilot error"
+    }
+  },
   "profile": {
     "title": "User profile",
     "subtitle": "Your account details on the platform.",

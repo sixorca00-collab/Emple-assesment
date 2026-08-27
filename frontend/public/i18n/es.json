@@ -74,6 +74,32 @@
       "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
     }
   },
+  "copilot": {
+    "title": "Copiloto de IA",
+    "historyTitle": "Historial",
+    "toggleHistory": "Mostrar u ocultar el historial",
+    "recentQueries": "Consultas recientes",
+    "historyError": "No se pudo cargar el historial.",
+    "historyEmpty": "Todavía no has hecho consultas.",
+    "usageTitle": "Consumo acumulado",
+    "usageError": "No se pudo cargar el consumo.",
+    "usageEmpty": "Sin consumo registrado.",
+    "usageQueries": "Consultas",
+    "usageAnswered": "Respondidas",
+    "usageRefused": "Rechazadas",
+    "usageTokens": "Tokens totales",
+    "emptyState": "Hazle una pregunta al copiloto sobre tus conversaciones.",
+    "inputPlaceholder": "Pregúntale algo al copiloto...",
+    "thinking": "El copiloto está procesando la consulta...",
+    "askError": "No se pudo enviar la consulta. Inténtalo de nuevo.",
+    "citations": "Fuentes citadas",
+    "status": {
+      "answered": "Respuesta",
+      "refused_no_context": "Sin contexto suficiente",
+      "refused_permission": "Sin permiso para ese contenido",
+      "error": "Error del copiloto"
+    }
+  },
   "profile": {
     "title": "Perfil de usuario",
     "subtitle": "Datos de tu cuenta en la plataforma.",
