@@ -8,6 +8,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 // cadena de seguridad stateless: /auth/** y /health publicas, el resto autenticado
 @Configuration
@@ -23,6 +28,8 @@ public class SecurityConfig {
         JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(accessTokens);
 
         http
+                // habilitamos CORS: Spring Security 6 deja pasar el preflight OPTIONS sin autenticacion
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // API sin cookies de sesion: no aplica CSRF
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -38,5 +45,26 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // CORS abierto: el frontend (nginx en otro puerto) llama a la API cross-origin.
+    // El backend es stateless y autentica por header Authorization (Bearer), no por cookies,
+    // asi que allowCredentials va en false y eso permite usar "*" como origen sin restriccion.
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        // cualquier origen: sirve para localhost:4200/14200, 127.0.0.1, o un host en la LAN
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("X-Correlation-Id"));
+        // sin cookies de sesion: no se envian credenciales
+        config.setAllowCredentials(false);
+        // cacheamos el preflight ~1h
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
