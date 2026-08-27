@@ -32,12 +32,12 @@ class OpenAiEmbeddingAdapterTest {
         // el request debe incluir dimensions ademas de model e input
         server.expect(requestTo("https://fake.ai/embeddings"))
                 .andExpect(method(HttpMethod.POST))
-                .andExpect(jsonPath("$.model").value("text-embedding-3-small"))
+                .andExpect(jsonPath("$.model").value("gemini-embedding-001"))
                 .andExpect(jsonPath("$.input").value("hola mundo"))
                 .andExpect(jsonPath("$.dimensions").value(DIMENSIONS))
                 .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
 
-        var properties = new AiEmbeddingProperties("https://fake.ai", "sk-test", "text-embedding-3-small", DIMENSIONS);
+        var properties = new AiEmbeddingProperties("https://fake.ai", "sk-test", "gemini-embedding-001", DIMENSIONS);
         var adapter = new OpenAiEmbeddingAdapter(properties, builder);
 
         float[] result = adapter.embed("hola mundo");
@@ -56,7 +56,7 @@ class OpenAiEmbeddingAdapterTest {
         server.expect(requestTo("https://fake.ai/embeddings"))
                 .andRespond(withSuccess("{\"data\":[{\"embedding\":[0.1,0.2,0.3]}]}", MediaType.APPLICATION_JSON));
 
-        var properties = new AiEmbeddingProperties("https://fake.ai", "sk-test", "text-embedding-3-small", DIMENSIONS);
+        var properties = new AiEmbeddingProperties("https://fake.ai", "sk-test", "gemini-embedding-001", DIMENSIONS);
         var adapter = new OpenAiEmbeddingAdapter(properties, builder);
 
         assertThatThrownBy(() -> adapter.embed("hola"))

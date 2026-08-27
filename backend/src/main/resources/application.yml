@@ -24,12 +24,12 @@ riwi:
       # chat del copiloto: Groq, formato OpenAI. Nunca hardcodeado, siempre por entorno.
       base-url: ${AI_CHAT_BASE_URL:https://api.groq.com/openai/v1}
       api-key: ${AI_CHAT_API_KEY:}
-      model: ${AI_CHAT_MODEL:llama-3.3-70b-versatile}
+      model: ${AI_CHAT_MODEL:openai/gpt-oss-120b}
     embedding:
-      # embeddings del RAG: OpenAI (Groq no expone endpoint de embeddings)
-      base-url: ${AI_EMBEDDING_BASE_URL:https://api.openai.com/v1}
+      # embeddings del RAG: Gemini via endpoint compatible con OpenAI (Groq no expone embeddings)
+      base-url: ${AI_EMBEDDING_BASE_URL:https://generativelanguage.googleapis.com/v1beta/openai}
       api-key: ${AI_EMBEDDING_API_KEY:}
-      model: ${AI_EMBEDDING_MODEL:text-embedding-3-small}
+      model: ${AI_EMBEDDING_MODEL:gemini-embedding-001}
       dimensions: ${AI_EMBEDDING_DIMENSIONS:1536}
   copilot:
     # top-K de fragmentos de contexto y umbral minimo de similitud coseno para la negativa honesta
