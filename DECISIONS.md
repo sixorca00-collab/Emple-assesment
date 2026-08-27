@@ -106,3 +106,19 @@ Estado: parcial — cubre el esqueleto + autenticación (D2 bloque 5-6). Se ampl
 - **Registro de sesiones en memoria (`WebSocketSessionRegistry`).** Suficiente para un despliegue de una instancia (el del assessment). Escalar a varias instancias requeriría un bus (Redis pub/sub) detrás del mismo `MessageBroadcastPort` — es cambio de adaptador, no de dominio.
 
 **Fuera de alcance de esta entrega (backend):** edición/borrado de canales, expulsar miembros, indicadores de "escribiendo", entrega garantizada / cola offline de eventos WebSocket, y el reintento automático de mensajes `failed` (es responsabilidad del cliente).
+
+---
+
+## D8. Búsqueda de mensajes por API (Consulta 2)
+
+**Decisión:** `GET /messages/search` delega la Consulta 2 tal cual está en `db/queries/02_message_search_headline.sql` (`websearch_to_tsquery` + `ts_headline` con `StartSel=<mark>`), sin reimplementar el resaltado ni el filtro de permisos en Java.
+
+**Puntos concretos:**
+- **Keyset sobre relevancia, no sobre `(created_at, id)`.** El orden de la Consulta 2 es `ts_rank DESC, id DESC`, así que el cursor debe codificar `(rank, id)` — no sirve el `Cursor(timestamp, id)` de mensajería (D7). Se añadió un modelo de dominio propio `SearchCursor(double rank, UUID id)` y un `SearchCursorCodec` (token opaco base64 `"<rank>|<uuid>"`), en paralelo al `CursorCodec` existente en vez de forzar una abstracción común: son dos dimensiones de orden distintas y mezclarlas ocultaría el criterio. El `rank` viaja como `double` y en SQL se compara con `CAST(:afterRank AS real)` para igualar el tipo de `ts_rank` (float4) y que la comparación de tuplas sea exacta. Nunca se usa `OFFSET`; se pide `limit + 1` para saber si hay página siguiente.
+- **Permisos sólo por RLS.** La política `p_rw_message_select` ya filtra por membresía del actor fijado por transacción; no se agrega chequeo redundante en Java. A diferencia del historial de canal (D7), aquí un no-miembro **no** recibe 403: una búsqueda que no encuentra nada visible devuelve `200` con lista vacía. Test `PrivateChannelLeakIT` + `MessageSearchApiIT` cubren que un actor no ve mensajes de canales privados ajenos aunque contengan el término.
+- **`channelId` opcional.** Restringe a un canal con `(CAST(:channelId AS uuid) IS NULL OR m.channel_id = :channelId)`; si el actor no es miembro de ese canal, la RLS deja el resultado vacío (no error).
+- **`q` vacío o sólo espacios → 400** (`InvalidInputException` → `INVALID_INPUT`), validado en el caso de uso. Tope de página `size = 50`, default `20`.
+- **Config de text search parametrizable** (`riwi.search.text-config`, default `spanish`) — debe coincidir con la del trigger `trg_rw_message_search_sync`; se pasa como `CAST(:lang AS regconfig)`, sigue siendo SQL parametrizado.
+- **Patrón:** `MessageSearchRepository` es un puerto separado de `MessageRepository` (ISP): la búsqueda es una capacidad de lectura distinta, con su propio modelo de resultado (`SearchHit`/`SearchResultPage`).
+
+**Fuera de alcance:** ranking por recencia combinado con relevancia, filtros por emisor/fecha, y resaltado en la búsqueda vectorial del RAG (esa es la Consulta 3).
