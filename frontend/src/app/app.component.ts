@@ -1,17 +1,11 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { RouterOutlet } from '@angular/router';
+import { HeaderComponent } from './shared/components/header/header.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, TranslatePipe],
+  imports: [RouterOutlet, HeaderComponent],
   templateUrl: './app.component.html',
 })
-export class AppComponent {
-  constructor(private readonly translate: TranslateService) {}
-
-  switchLang(lang: string): void {
-    this.translate.use(lang);
-  }
-}
+export class AppComponent {}
