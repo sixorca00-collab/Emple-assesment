@@ -1,0 +1,6 @@
+# fuera del contexto de build: se reinstala/reconstruye dentro de la imagen
+node_modules/
+dist/
+.angular/
+.idea/
+*.log

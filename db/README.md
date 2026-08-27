@@ -6,16 +6,23 @@ Todo el DDL esta escrito a mano y versionado con **Flyway** (SQL plano numerado)
 ```
 db/
 ├── migrations/
-│   ├── V1__init.sql        -- tablas rw_*, PK/FK con ON DELETE, CHECK, indices unicos parciales, pgvector, tsvector/vector
-│   ├── V2__rls.sql         -- rol de aplicacion sin BYPASSRLS + RLS sobre canales y mensajes + helpers de identidad
-│   ├── V3__functions.sql   -- funciones transaccionales, vista de conversaciones, 2 stored procedures de usuarios
-│   └── V4__triggers.sql    -- trigger de sincronizacion de search_tsv, bloqueo de borrado fisico, updated_at
-├── queries/                -- las 4 consultas de la seccion 11, cada una documentada en su cabecera
-├── seed.json               -- corpus inicial (usuarios, canales, membresias, mensajes, lecturas, consultas al copiloto)
-├── seed_loader.sql         -- utilitario que carga seed.json (NO es una migracion)
-├── NORMALIZACION.md        -- proceso 1FN -> 2FN -> 3FN (texto/tablas)
+│   ├── V1__init.sql          -- tablas rw_*, PK/FK con ON DELETE, CHECK, indices unicos parciales, pgvector, tsvector/vector
+│   ├── V2__rls.sql           -- rol de aplicacion sin BYPASSRLS + RLS sobre canales y mensajes + helpers de identidad
+│   ├── V3__functions.sql     -- funciones transaccionales, vista de conversaciones, 2 stored procedures de usuarios
+│   ├── V4__triggers.sql      -- trigger de sincronizacion de search_tsv, bloqueo de borrado fisico, updated_at
+│   ├── V5__copilot.sql       -- version de prompt, backfill de embeddings, senal de "contexto en otro canal"
+│   └── V6__copilot_ops.sql   -- re-embedding total (modo all) + cobertura de embeddings para el readiness
+├── queries/                  -- las 4 consultas de la seccion 11, cada una documentada en su cabecera
+├── seed.json                 -- corpus inicial (usuarios, canales, membresias, mensajes, lecturas, consultas al copiloto)
+├── seed_loader.sql           -- utilitario que carga seed.json (NO es una migracion)
+├── Dockerfile                -- imagen del servicio "migrator" del docker-compose (Flyway + psql)
+├── docker-entrypoint.sh      -- migrate + ALTER ROLE riwi_app + carga idempotente del seed
+├── NORMALIZACION.md          -- proceso 1FN -> 2FN -> 3FN (texto/tablas)
 └── README.md
 ```
+
+En `docker compose`, el servicio **migrator** hace todo esto automaticamente (ver `README.md` raiz);
+las opciones de abajo son para correrlo a mano o depurar.
 
 ## Roles y arranque
 

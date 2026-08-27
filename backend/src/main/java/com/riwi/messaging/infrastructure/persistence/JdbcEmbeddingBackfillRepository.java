@@ -1,5 +1,6 @@
 package com.riwi.messaging.infrastructure.persistence;
 
+import com.riwi.messaging.domain.model.EmbeddingCoverage;
 import com.riwi.messaging.domain.model.PendingMessage;
 import com.riwi.messaging.domain.port.EmbeddingBackfillRepository;
 import org.springframework.jdbc.core.RowMapper;
@@ -29,6 +30,27 @@ public class JdbcEmbeddingBackfillRepository implements EmbeddingBackfillReposit
                 "SELECT message_id, body FROM rw_messages_missing_embedding(:limit)",
                 params,
                 pendingMapper());
+    }
+
+    @Override
+    public List<PendingMessage> allLive(int limit) {
+        var params = new MapSqlParameterSource("limit", limit);
+        // funcion SECURITY DEFINER: lista TODOS los mensajes vivos para re-embedding total
+        return jdbc.query(
+                "SELECT message_id, body FROM rw_messages_for_reembedding(:limit)",
+                params,
+                pendingMapper());
+    }
+
+    @Override
+    public EmbeddingCoverage coverage() {
+        // funcion SECURITY DEFINER: conteo global de cobertura de embeddings
+        return jdbc.queryForObject(
+                "SELECT total_messages, messages_with_embedding FROM rw_message_embedding_stats()",
+                new MapSqlParameterSource(),
+                (ResultSet rs, int rowNum) -> new EmbeddingCoverage(
+                        rs.getLong("total_messages"),
+                        rs.getLong("messages_with_embedding")));
     }
 
     @Override

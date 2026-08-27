@@ -1,5 +1,6 @@
 package com.riwi.messaging.infrastructure.config;
 
+import com.riwi.messaging.application.copilot.CopilotModels;
 import com.riwi.messaging.application.copilot.CopilotPromptBuilder;
 import com.riwi.messaging.application.copilot.CopilotSettings;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -15,5 +16,11 @@ public class AiConfig {
     @Bean
     CopilotSettings copilotSettings(CopilotProperties properties) {
         return new CopilotSettings(properties.topK(), properties.minSimilarity(), CopilotPromptBuilder.VERSION);
+    }
+
+    // los ids de modelo llegan a la aplicacion como valor, sin acoplarla a las properties de infraestructura
+    @Bean
+    CopilotModels copilotModels(AiChatProperties chat, AiEmbeddingProperties embedding) {
+        return new CopilotModels(chat.model(), embedding.model());
     }
 }
