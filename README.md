@@ -140,6 +140,7 @@ El `frontend/Dockerfile` la resuelve con un `sed` sobre una copia del código de
 (el repo no se toca), tomando el valor del build-arg `API_BASE_URL` (default `http://localhost:8080`).
 `docker-compose.yml` pasa `API_BASE_URL` desde `.env`; debe apuntar al puerto público del backend (`SERVER_PORT`).
 Se eligió build-arg + `sed` por ser lo más simple y no requerir cambios en `frontend/src/`.
+El backend habilita CORS para los orígenes de `CORS_ALLOWED_ORIGINS` (default `http://localhost:4200,http://localhost:14200`); nginx solo sirve estáticos y no hace proxy de la API.
 
 ---
 
