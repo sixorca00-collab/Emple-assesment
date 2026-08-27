@@ -6,5 +6,30 @@
     "chat": "Conversation",
     "copilot": "Copilot",
     "profile": "Profile"
+  },
+  "theme": {
+    "toggle": "Toggle theme"
+  },
+  "auth": {
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Sign in",
+    "subtitle": "Access the Riwi messaging platform",
+    "email": "Email",
+    "emailPlaceholder": "your.email@riwi.io",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "submit": "Sign in",
+    "loading": "Signing in...",
+    "validation": {
+      "emailRequired": "Email is required",
+      "emailInvalid": "Email format is not valid",
+      "passwordRequired": "Password is required"
+    },
+    "error": {
+      "invalid": "Wrong email or password",
+      "network": "Could not reach the server. Please try again."
+    }
   }
 }
