@@ -1,0 +1,10 @@
+{
+  "app": {
+    "title": "Riwi Messenger"
+  },
+  "nav": {
+    "chat": "Conversation",
+    "copilot": "Copilot",
+    "profile": "Profile"
+  }
+}

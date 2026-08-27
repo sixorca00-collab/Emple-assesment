@@ -29,10 +29,12 @@ Prioriza SIEMPRE la opción más simple y explicable por encima de la más "eleg
 - El `user_id` jamás se maneja manualmente en peticiones; siempre viaje implícito en el JWT que gestiona el interceptor HTTP.
 
 ## Estilo de código y comentarios
+El coder es nuevo en Angular y necesita poder leer el código meses después y entenderlo sin ayuda — así que aquí SÍ se comenta, a diferencia de la convención general de "no comentar lo obvio".
 - Comentarios solo con `//`, nunca con bloques `/* */`.
 - Un comentario nunca ocupa más de una línea.
-- Nunca dos líneas de comentario consecutivas — si necesitas explicar más de una cosa, es señal de que el código debería ser más simple o dividirse.
-- Comenta solo lo que no es obvio (una decisión rara, un workaround); no describas qué hace el código si el nombre ya lo dice.
+- Nunca dos líneas de comentario consecutivas — si necesitas explicar más de una cosa, el código debería dividirse en vez de acumular comentarios.
+- Cada bloque funcional relevante (una llamada HTTP, una suscripción, un efecto, un guard, un interceptor) lleva un comentario corto y simple justo antes o en la misma línea, tipo `// llamamos al endpoint de mensajes` o `// guardamos el token en el signal de sesión` — en lenguaje llano, sin jerga, pensado para que el propio coder lo entienda en la sustentación.
+- No hace falta comentar lo trivial (un getter, un binding directo en el template) — el criterio es: si al releerlo en un mes no se entendería de inmediato qué se está llamando o para qué, lleva comentario.
 
 ## Verificación antes de dar por terminada una feature
 Ejecuta dentro de `frontend/`:
