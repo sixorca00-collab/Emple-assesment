@@ -13,6 +13,14 @@
   "auth": {
     "logout": "Cerrar sesión"
   },
+  "common": {
+    "loading": "Cargando...",
+    "retry": "Reintentar",
+    "loadMore": "Cargar más",
+    "send": "Enviar",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
   "login": {
     "title": "Iniciar sesión",
     "subtitle": "Accede a la plataforma de mensajería Riwi",

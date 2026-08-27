@@ -35,6 +35,11 @@
   <span *ngIf="themeService.isDarkMode()">☀️</span>
 </button>
 
+    <!-- Nombre del usuario autenticado, tomado de los claims del token -->
+    <span *ngIf="auth.currentUser() as user" class="text-xs font-semibold text-accent-300 hidden sm:inline">
+      {{ user.name }}
+    </span>
+
     <!-- Botón de cerrar sesión: solo visible con sesión activa -->
     <button
       *ngIf="auth.isLoggedIn()"

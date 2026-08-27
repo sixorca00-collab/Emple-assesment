@@ -13,6 +13,14 @@
   "auth": {
     "logout": "Log out"
   },
+  "common": {
+    "loading": "Loading...",
+    "retry": "Retry",
+    "loadMore": "Load more",
+    "send": "Send",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
   "login": {
     "title": "Sign in",
     "subtitle": "Access the Riwi messaging platform",
