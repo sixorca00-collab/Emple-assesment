@@ -14,6 +14,8 @@ servers:
 security:
 - bearer-jwt: []
 tags:
+- description: "Consulta, edicion y eliminacion de usuarios (SP de la BD)"
+  name: Usuarios
 - description: "Conversaciones, canales, miembros e historial de mensajes"
   name: Canales
 - description: "Copiloto RAG: recuperacion limitada por permisos, historial y consumo\
@@ -119,7 +121,7 @@ paths:
       - Auth
   /channels:
     get:
-      operationId: list
+      operationId: list_1
       parameters:
       - in: query
         name: cursor
@@ -377,9 +379,28 @@ paths:
       summary: Liveness del backend
       tags:
       - Infra
+  /internal/copilot/status:
+    get:
+      operationId: status
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CopilotStatusResponse"
+          description: OK
+      tags:
+      - internal-copilot-controller
   /internal/embeddings/backfill:
     post:
       operationId: backfill
+      parameters:
+      - in: query
+        name: mode
+        required: false
+        schema:
+          type: string
+          default: missing
       responses:
         "200":
           content:
@@ -454,7 +475,7 @@ paths:
       - Busqueda
   /messages/{messageId}:
     delete:
-      operationId: delete
+      operationId: delete_1
       parameters:
       - in: path
         name: messageId
@@ -511,6 +532,110 @@ paths:
       summary: Edita un mensaje (solo el autor)
       tags:
       - Mensajes
+  /users:
+    get:
+      operationId: list
+      parameters:
+      - in: query
+        name: q
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: size
+        required: false
+        schema:
+          type: integer
+          format: int32
+      - in: query
+        name: includeInactive
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "400":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Cursor invalido
+      summary: Consulta de usuarios con keyset pagination; el SP restringe filas y
+        campos del no-admin
+      tags:
+      - Usuarios
+  /users/{id}:
+    delete:
+      operationId: delete
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Usuario marcado como eliminado
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no puede eliminar a ese usuario
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Usuario inexistente
+      summary: Elimina un usuario (soft delete); revoca sus refresh tokens y conserva
+        mensajes e historial
+      tags:
+      - Usuarios
+    patch:
+      operationId: update
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserSummaryResponse"
+          description: Usuario actualizado
+        "403":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: El actor no puede editar a ese usuario o ese campo
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Usuario inexistente
+      summary: "Edita un usuario; el SP permite solo al propio usuario o a un admin,\
+        \ is_active solo al admin"
+      tags:
+      - Usuarios
 components:
   schemas:
     AddMemberRequest:
@@ -639,6 +764,23 @@ components:
           type: string
         usage:
           $ref: "#/components/schemas/UsageView"
+    CopilotStatusResponse:
+      type: object
+      properties:
+        chatModel:
+          type: string
+        chatProviderReachable:
+          type: boolean
+        embeddingModel:
+          type: string
+        embeddingProviderReachable:
+          type: boolean
+        messagesWithEmbedding:
+          type: integer
+          format: int64
+        totalMessages:
+          type: integer
+          format: int64
     CopilotUsageResponse:
       type: object
       properties:
@@ -841,6 +983,27 @@ components:
           type: string
         tokenType:
           type: string
+    UpdateUserRequest:
+      type: object
+      properties:
+        avatarUrl:
+          type: string
+          maxLength: 500
+          minLength: 0
+        bio:
+          type: string
+          maxLength: 2000
+          minLength: 0
+        displayName:
+          type: string
+          maxLength: 80
+          minLength: 2
+        isActive:
+          type: boolean
+        jobTitle:
+          type: string
+          maxLength: 80
+          minLength: 2
     UsageView:
       type: object
       properties:
@@ -853,6 +1016,23 @@ components:
         totalTokens:
           type: integer
           format: int32
+    UserSummaryResponse:
+      type: object
+      properties:
+        avatarUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        displayName:
+          type: string
+        id:
+          type: string
+          format: uuid
+        isActive:
+          type: boolean
+        jobTitle:
+          type: string
   securitySchemes:
     bearer-jwt:
       bearerFormat: JWT
