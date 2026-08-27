@@ -73,5 +73,17 @@
       "emailTaken": "Ese correo ya está registrado",
       "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
     }
+  },
+  "profile": {
+    "title": "Perfil de usuario",
+    "subtitle": "Datos de tu cuenta en la plataforma.",
+    "error": "No se pudo cargar el perfil.",
+    "platformAdmin": "Administrador de plataforma",
+    "accountData": "Datos de la cuenta",
+    "fullName": "Nombre completo",
+    "jobTitle": "Cargo",
+    "email": "Correo electrónico",
+    "visibleConversations": "Conversaciones visibles",
+    "editUnavailable": "Edición no disponible en esta versión."
   }
 }

@@ -73,5 +73,17 @@
       "emailTaken": "That email is already registered",
       "network": "Could not reach the server. Please try again."
     }
+  },
+  "profile": {
+    "title": "User profile",
+    "subtitle": "Your account details on the platform.",
+    "error": "The profile could not be loaded.",
+    "platformAdmin": "Platform admin",
+    "accountData": "Account data",
+    "fullName": "Full name",
+    "jobTitle": "Job title",
+    "email": "Email",
+    "visibleConversations": "Visible conversations",
+    "editUnavailable": "Editing is not available in this version."
   }
 }
