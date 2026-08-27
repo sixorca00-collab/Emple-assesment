@@ -16,7 +16,8 @@ public class BackfillEmbeddingsUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(BackfillEmbeddingsUseCase.class);
 
-    private static final int BATCH_LIMIT = 200;
+    private static final int MISSING_BATCH = 200;
+    private static final int REEMBED_BATCH = 2000;
 
     private final EmbeddingBackfillRepository backfill;
     private final EmbeddingPort embeddings;
@@ -28,8 +29,16 @@ public class BackfillEmbeddingsUseCase {
 
     @Transactional
     public BackfillResult execute() {
-        // tomamos el lote de mensajes sin embedding (funcion SECURITY DEFINER, ve todos los canales)
-        List<PendingMessage> pending = backfill.pending(BATCH_LIMIT);
+        // por defecto solo completa los embeddings faltantes
+        return execute(BackfillMode.MISSING);
+    }
+
+    @Transactional
+    public BackfillResult execute(BackfillMode mode) {
+        // modo ALL: re-embebe todo el corpus vivo (sobrescribe los vectores sinteticos del seed)
+        List<PendingMessage> pending = mode == BackfillMode.ALL
+                ? backfill.allLive(REEMBED_BATCH)
+                : backfill.pending(MISSING_BATCH);
         if (pending.isEmpty()) {
             return new BackfillResult(0, 0, false);
         }

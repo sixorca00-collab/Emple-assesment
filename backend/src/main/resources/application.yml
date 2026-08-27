@@ -38,6 +38,8 @@ riwi:
   embeddings:
     # backfill de embeddings al arrancar; en produccion esto seria asincrono/cola
     backfill-on-startup: ${EMBEDDINGS_BACKFILL_ON_STARTUP:false}
+    # missing = solo vectores faltantes; all = re-embebe todo (sobrescribe los sinteticos del seed)
+    backfill-mode: ${EMBEDDINGS_BACKFILL_MODE:missing}
   jwt:
     # secreto HS256: minimo 32 caracteres (256 bits). Nunca hardcodeado, siempre por entorno.
     secret: ${JWT_SECRET:local-dev-secret-change-me-please-32bytes!}
