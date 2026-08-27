@@ -74,6 +74,47 @@
       "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
     }
   },
+  "chat": {
+    "sidebarTitle": "Canales y chats",
+    "toggleSidebar": "Mostrar u ocultar la barra lateral",
+    "searchPlaceholder": "Buscar mensajes...",
+    "searchButton": "Buscar",
+    "searchResults": "Resultados de búsqueda",
+    "searching": "Buscando...",
+    "searchError": "No se pudo completar la búsqueda.",
+    "noResults": "Sin resultados para esa búsqueda.",
+    "newChannel": "Nuevo canal",
+    "conversationsError": "No se pudieron cargar las conversaciones.",
+    "noConversations": "Todavía no tienes conversaciones.",
+    "selectChannel": "Selecciona un canal para ver los mensajes.",
+    "messagesError": "No se pudieron cargar los mensajes.",
+    "noMessages": "Aún no hay mensajes en este canal.",
+    "loadingOlder": "Cargando mensajes anteriores...",
+    "inputPlaceholder": "Escribe un mensaje...",
+    "retry": "Reintentar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "edited": "editado",
+    "addMember": "Agregar miembro",
+    "memberUserId": "ID del usuario",
+    "roleMember": "Miembro",
+    "roleAdmin": "Administrador",
+    "createTitle": "Crear canal",
+    "channelName": "Nombre del canal",
+    "channelDescription": "Descripción (opcional)",
+    "privateChannel": "Canal privado",
+    "create": "Crear",
+    "messageState": {
+      "pending": "Pendiente",
+      "sent": "Enviado",
+      "failed": "Fallido"
+    },
+    "realtime": {
+      "connecting": "Conectando...",
+      "open": "En línea",
+      "closed": "Sin conexión"
+    }
+  },
   "copilot": {
     "title": "Copiloto de IA",
     "historyTitle": "Historial",
