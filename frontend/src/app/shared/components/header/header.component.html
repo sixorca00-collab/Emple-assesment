@@ -14,9 +14,15 @@
          class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
         {{ 'nav.copilot' | translate }}
       </a>
-      <a routerLink="/profile" routerLinkActive="bg-brand-600 text-white" 
+      <a routerLink="/profile" routerLinkActive="bg-brand-600 text-white"
          class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
         {{ 'nav.profile' | translate }}
+      </a>
+      <!-- enlace de gestion de usuarios: solo visible para administradores de plataforma -->
+      <a *ngIf="auth.currentUser()?.isPlatformAdmin"
+         routerLink="/admin/users" routerLinkActive="bg-brand-600 text-white"
+         class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
+        {{ 'nav.admin' | translate }}
       </a>
     </nav>
   </div>

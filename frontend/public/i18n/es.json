@@ -5,7 +5,8 @@
   "nav": {
     "chat": "Conversación",
     "copilot": "Copiloto",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "admin": "Usuarios"
   },
   "theme": {
     "toggle": "Cambiar tema"
@@ -152,5 +153,29 @@
     "email": "Correo electrónico",
     "visibleConversations": "Conversaciones visibles",
     "editUnavailable": "Edición no disponible en esta versión."
+  },
+  "admin": {
+    "title": "Gestión de usuarios",
+    "subtitle": "Consulta, edición y eliminación de usuarios de la plataforma.",
+    "searchPlaceholder": "Buscar por nombre o cargo...",
+    "search": "Buscar",
+    "includeInactive": "Incluir inactivos",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "empty": "No hay usuarios que coincidan con la búsqueda.",
+    "editTitle": "Editar usuario",
+    "displayName": "Nombre visible",
+    "jobTitle": "Cargo",
+    "bio": "Biografía",
+    "activeUser": "Usuario activo",
+    "deleteTitle": "Eliminar usuario",
+    "deleteConfirm": "¿Seguro que quieres eliminar a {{ name }}? Se conservan sus mensajes y su historial.",
+    "error": {
+      "list": "No se pudo cargar el listado de usuarios.",
+      "forbidden": "No tienes permiso para esta acción.",
+      "action": "No se pudo completar la acción. Inténtalo de nuevo."
+    }
   }
 }
