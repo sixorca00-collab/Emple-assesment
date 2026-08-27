@@ -1,0 +1,28 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: riwi-messaging-backend
+  datasource:
+    # el backend se conecta SIEMPRE como el rol de aplicacion riwi_app (sin SUPERUSER ni BYPASSRLS)
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:bd_nombre_apellido_clan}
+    username: ${DB_APP_USER:riwi_app}
+    password: ${DB_APP_PASSWORD:riwi_app}
+  flyway:
+    # deshabilitado: riwi_app no crea roles; las migraciones las corre un superusuario bootstrap (ver db/README.md)
+    enabled: false
+    locations: filesystem:../db/migrations
+    baseline-on-migrate: true
+
+riwi:
+  jwt:
+    # secreto HS256: minimo 32 caracteres (256 bits). Nunca hardcodeado, siempre por entorno.
+    secret: ${JWT_SECRET:local-dev-secret-change-me-please-32bytes!}
+    access-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:15}
+    refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
+
+logging:
+  pattern:
+    # incluimos el correlation id en cada linea de log via MDC
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId:-no-cid}] %logger{36} - %msg%n"
