@@ -2,6 +2,7 @@ package com.riwi.messaging.interfaces.rest;
 
 import com.riwi.messaging.domain.exception.AuthenticationFailedException;
 import com.riwi.messaging.domain.exception.DomainException;
+import com.riwi.messaging.domain.exception.InvalidInputException;
 import com.riwi.messaging.domain.exception.InvalidStateException;
 import com.riwi.messaging.domain.exception.InvalidTokenException;
 import com.riwi.messaging.domain.exception.NotAuthorizedException;
@@ -48,6 +49,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleConflict(InvalidStateException ex) {
         // estado invalido para la operacion (SQLSTATE 55000), p.ej. editar un mensaje borrado
         return build(HttpStatus.CONFLICT, ex.code(), ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidInput(InvalidInputException ex) {
+        // entrada invalida del cliente, p.ej. termino de busqueda vacio
+        return build(HttpStatus.BAD_REQUEST, ex.code(), ex.getMessage());
     }
 
     @ExceptionHandler(InvalidCursorException.class)
