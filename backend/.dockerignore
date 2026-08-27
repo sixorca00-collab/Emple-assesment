@@ -1,0 +1,5 @@
+# artefactos de build y ruido que no debe entrar al contexto de Docker
+target/
+*.class
+.idea/
+*.iml
