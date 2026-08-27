@@ -43,6 +43,7 @@ Qué hace `docker compose up`:
 |---|---|---|
 | Frontend | http://localhost:4200 | `FRONTEND_PORT` |
 | Backend REST | http://localhost:8080 | `SERVER_PORT` |
+| Swagger UI | http://localhost:8080/swagger-ui.html | |
 | Health | http://localhost:8080/health | |
 | Postgres | localhost:5432 | `POSTGRES_PORT` |
 
@@ -147,3 +148,31 @@ Se eligió build-arg + `sed` por ser lo más simple y no requerir cambios en `fr
 - `ARCHITECTURE.md` — contenedores, 4 capas y regla de dependencias, flujo del actor JWT → RLS, doble filtro del RAG.
 - `DECISIONS.md` — decisiones técnicas D1–D10.
 - `db/README.md`, `db/NORMALIZACION.md` — capa de datos y normalización 1FN→3FN.
+- `docs/openapi.yaml` — contrato OpenAPI 3 versionado, regenerado por `OpenApiContractIT`.
+
+---
+
+## 8. Documentación de la API (OpenAPI / Swagger)
+
+El backend publica su propio contrato OpenAPI 3 con springdoc; no hay que exportar nada a mano.
+
+| Recurso | URL (backend corriendo) |
+|---|---|
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+| Contrato JSON | http://localhost:8080/v3/api-docs |
+| Contrato YAML | http://localhost:8080/v3/api-docs.yaml |
+
+El contrato versionado en el repo vive en `docs/openapi.yaml`.
+
+Todas las operaciones exigen el esquema `bearer-jwt` (HTTP Bearer, formato JWT) salvo `/auth/**`
+y `/health`, que son públicas. En Swagger UI el access token se pega con el botón **Authorize**.
+
+### Regenerar `docs/openapi.yaml`
+
+`OpenApiContractIT` arranca el contexto real, pide `/v3/api-docs.yaml` y sobrescribe el archivo:
+
+```bash
+mvn -f backend/pom.xml test -Dtest=OpenApiContractIT
+```
+
+Requiere Docker (Testcontainers levanta Postgres con pgvector).
