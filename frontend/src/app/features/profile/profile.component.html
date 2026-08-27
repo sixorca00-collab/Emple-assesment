@@ -1,0 +1,160 @@
+<div class="min-h-[calc(100vh-4rem)] w-full bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-slate-100 p-6 md:p-10 overflow-y-auto">
+  <div class="max-w-4xl mx-auto space-y-8">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex items-center justify-between border-b border-light-border dark:border-dark-border pb-5">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Perfil de Usuario</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Gestiona tu información personal, presencia e idioma.</p>
+      </div>
+
+      <!-- Banner Mensaje de Éxito -->
+      <div *ngIf="savedSuccessfully()" class="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium animate-fade-in flex items-center space-x-2">
+        <span>✓</span>
+        <span>Cambios guardados correctamente</span>
+      </div>
+    </div>
+
+    <!-- Card Principal: Avatar y Resumen de Estado -->
+    <div class="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+      
+      <!-- Avatar con Selector de Estado -->
+      <div class="relative">
+        <div class="w-24 h-24 rounded-2xl bg-gradient-to-tr from-brand-600 to-accent-400 text-white flex items-center justify-center text-3xl font-bold shadow-md">
+          {{ profile().fullName.charAt(0) }}
+        </div>
+        <!-- Badge Indicador de Presencia -->
+        <span 
+          [ngClass]="{
+            'bg-emerald-500': profile().presence === 'online',
+            'bg-rose-500': profile().presence === 'busy',
+            'bg-amber-500': profile().presence === 'away',
+            'bg-slate-400': profile().presence === 'offline'
+          }"
+          class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-light-surface dark:border-dark-surface">
+        </span>
+      </div>
+
+      <!-- Información básica y Selector de Presencia -->
+      <div class="flex-1 text-center md:text-left space-y-2">
+        <div class="flex flex-col md:flex-row md:items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ profile().fullName }}</h2>
+            <p class="text-sm font-medium text-brand-600 dark:text-accent-400">&#64;{{ profile().username }} · {{ profile().role }}</p>
+          </div>
+          
+          <!-- Botones Selector de Presencia -->
+          <div class="flex items-center justify-center space-x-1 mt-3 md:mt-0 bg-light-bg dark:bg-dark-bg p-1 rounded-xl border border-light-border dark:border-dark-border text-xs">
+            <button (click)="changePresence('online')" [class.bg-emerald-500]="profile().presence === 'online'" [class.text-white]="profile().presence === 'online'" class="px-2.5 py-1 rounded-lg transition font-medium">Activo</button>
+            <button (click)="changePresence('busy')" [class.bg-rose-500]="profile().presence === 'busy'" [class.text-white]="profile().presence === 'busy'" class="px-2.5 py-1 rounded-lg transition font-medium">Ocupado</button>
+            <button (click)="changePresence('away')" [class.bg-amber-500]="profile().presence === 'away'" [class.text-white]="profile().presence === 'away'" class="px-2.5 py-1 rounded-lg transition font-medium">Ausente</button>
+          </div>
+        </div>
+
+        <p class="text-sm text-slate-600 dark:text-slate-300 italic pt-1">"{{ profile().statusMessage }}"</p>
+      </div>
+    </div>
+
+    <!-- Formulario de Edición -->
+    <form (submit)="saveProfile(); $event.preventDefault()" class="space-y-6">
+      
+      <!-- Sección 1: Datos de Usuario -->
+      <div class="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-2xl p-6 shadow-sm space-y-4">
+        <h3 class="text-base font-semibold text-slate-900 dark:text-white border-b border-light-border dark:border-dark-border pb-3">
+          Datos de la Cuenta
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nombre Completo</label>
+            <input 
+              type="text" 
+              [(ngModel)]="profile().fullName" 
+              name="fullName"
+              class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nombre de Usuario</label>
+            <input 
+              type="text" 
+              [(ngModel)]="profile().username" 
+              name="username"
+              class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Correo Electrónico</label>
+            <input 
+              type="email" 
+              [(ngModel)]="profile().email" 
+              name="email"
+              class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Estado Personalizado</label>
+            <input 
+              type="text" 
+              [(ngModel)]="profile().statusMessage" 
+              name="statusMessage"
+              placeholder="¿Qué estás haciendo?"
+              class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Biografía / Acerca de mí</label>
+          <textarea 
+            rows="3" 
+            [(ngModel)]="profile().bio" 
+            name="bio"
+            class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition resize-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Sección 2: Ajustes de Notificaciones y Aplicación -->
+      <div class="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-2xl p-6 shadow-sm space-y-4">
+        <h3 class="text-base font-semibold text-slate-900 dark:text-white border-b border-light-border dark:border-dark-border pb-3">
+          Preferencias del Sistema
+        </h3>
+
+        <div class="space-y-3">
+          <label class="flex items-center justify-between p-3 rounded-xl hover:bg-light-bg dark:hover:bg-dark-bg transition cursor-pointer">
+            <div>
+              <p class="text-sm font-medium text-slate-800 dark:text-slate-200">Notificaciones de Escritorio</p>
+              <p class="text-xs text-slate-400">Recibir alertas en tiempo real al llegar nuevos mensajes</p>
+            </div>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="profile().notificationsEnabled" 
+              name="notificationsEnabled"
+              class="w-5 h-5 accent-brand-600 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between p-3 rounded-xl hover:bg-light-bg dark:hover:bg-dark-bg transition cursor-pointer">
+            <div>
+              <p class="text-sm font-medium text-slate-800 dark:text-slate-200">Resumen por Correo</p>
+              <p class="text-xs text-slate-400">Recibir un correo diario con menciones no leídas</p>
+            </div>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="profile().emailNotifications" 
+              name="emailNotifications"
+              class="w-5 h-5 accent-brand-600 rounded cursor-pointer" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Botón Guardar -->
+      <div class="flex justify-end">
+        <button 
+          type="submit" 
+          class="bg-brand-600 hover:bg-brand-700 text-white font-medium px-6 py-3 rounded-xl shadow-md transition-all text-sm flex items-center space-x-2">
+          <span>Guardar Cambios</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
