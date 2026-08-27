@@ -1,135 +1,262 @@
-<div class="flex h-[calc(100vh-4rem)] w-full bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-slate-100 overflow-hidden select-none">
+<div class="flex h-[calc(100vh-4rem)] w-full bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-slate-100 overflow-hidden">
 
-  <!-- ================= SIDEBAR PLEGABLE (Navbar Slide) ================= -->
-  <aside 
-    [class.w-72]="isSidebarOpen()" 
+  <!-- ================= SIDEBAR ================= -->
+  <aside
+    [class.w-80]="isSidebarOpen()"
     [class.w-16]="!isSidebarOpen()"
-    class="bg-light-surface dark:bg-dark-surface border-r border-light-border dark:border-dark-border flex flex-col transition-all duration-300 ease-in-out relative shadow-sm">
-    
-    <!-- Top Bar del Sidebar + Botón Plegar -->
-    <div class="h-14 px-4 flex items-center justify-between border-b border-light-border dark:border-dark-border">
-      <div *ngIf="isSidebarOpen()" class="flex items-center space-x-2 truncate">
-        <span class="w-2.5 h-2.5 rounded-full bg-accent-400 animate-pulse"></span>
-        <h2 class="font-bold text-sm tracking-wide text-brand-600 dark:text-brand-500 uppercase truncate">
-          Canales & Chats
-        </h2>
-      </div>
+    class="bg-light-surface dark:bg-dark-surface border-r border-light-border dark:border-dark-border flex flex-col transition-all duration-300 ease-in-out shadow-sm">
 
-      <!-- Botón Plegar/Desplegar -->
-      <button 
-        (click)="toggleSidebar()" 
-        class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors focus:outline-none mx-auto"
-        [title]="isSidebarOpen() ? 'Colapsar barra' : 'Expandir barra'">
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             class="h-5 w-5 transition-transform duration-300" 
-             [class.rotate-180]="!isSidebarOpen()" 
-             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="h-14 px-4 flex items-center justify-between border-b border-light-border dark:border-dark-border">
+      <h2 *ngIf="isSidebarOpen()" class="font-bold text-sm tracking-wide text-brand-600 dark:text-brand-500 uppercase truncate">
+        {{ 'chat.sidebarTitle' | translate }}
+      </h2>
+      <button (click)="toggleSidebar()"
+        class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition mx-auto"
+        [attr.aria-label]="'chat.toggleSidebar' | translate">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-300"
+          [class.rotate-180]="!isSidebarOpen()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
         </svg>
       </button>
     </div>
 
-    <!-- Lista de Canales -->
-    <div class="flex-1 overflow-y-auto p-2 space-y-1">
-      <div *ngIf="isSidebarOpen()" class="px-3 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-        Mensajería
+    <div *ngIf="isSidebarOpen()" class="flex flex-col flex-1 overflow-hidden">
+
+      <!-- Buscador -->
+      <div class="p-3 border-b border-light-border dark:border-dark-border space-y-2">
+        <form (submit)="runSearch(); $event.preventDefault()" class="flex items-center space-x-2">
+          <input type="search" [(ngModel)]="searchQuery" name="searchQuery"
+            [placeholder]="'chat.searchPlaceholder' | translate"
+            class="flex-1 bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          <button type="submit" class="px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium">
+            {{ 'chat.searchButton' | translate }}
+          </button>
+        </form>
+        <button (click)="showCreate.set(true)"
+          class="w-full px-3 py-2 rounded-lg border border-dashed border-light-border dark:border-dark-border text-xs font-medium text-brand-600 dark:text-accent-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          + {{ 'chat.newChannel' | translate }}
+        </button>
       </div>
 
-      <button 
-        *ngFor="let channel of channels"
-        (click)="selectChannel(channel)"
-        [class.bg-brand-50]="isSidebarOpen() && activeChannel().id === channel.id"
-        [class.dark:bg-slate-800]="isSidebarOpen() && activeChannel().id === channel.id"
-        [class.border-brand-600]="activeChannel().id === channel.id"
-        class="w-full flex items-center space-x-3 p-2.5 rounded-xl border-l-4 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/60 transition text-left group">
-        
-        <!-- Ícono del Canal -->
-        <span class="w-8 h-8 rounded-lg bg-brand-100 dark:bg-slate-700 text-brand-600 dark:text-accent-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
-          {{ channel.icon }}
-        </span>
+      <div class="flex-1 overflow-y-auto p-2 space-y-1">
 
-        <!-- Info del Canal (Visible solo si está desplegado) -->
-        <div *ngIf="isSidebarOpen()" class="flex-1 flex items-center justify-between overflow-hidden">
-          <span class="text-sm font-medium truncate text-slate-700 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-white">
-            {{ channel.name }}
-          </span>
-          <span *ngIf="channel.unreadCount" class="ml-2 px-2 py-0.5 text-xs font-extrabold bg-accent-500 text-white rounded-full">
-            {{ channel.unreadCount }}
-          </span>
-        </div>
-      </button>
+        <!-- Resultados de busqueda -->
+        <ng-container *ngIf="searchStatus() !== 'idle'">
+          <p class="px-3 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
+            {{ 'chat.searchResults' | translate }}
+          </p>
+          <p *ngIf="searchStatus() === 'loading'" class="px-3 py-2 text-xs text-slate-400">{{ 'chat.searching' | translate }}</p>
+          <div *ngIf="searchStatus() === 'error'" class="px-3 py-2 space-y-2">
+            <p class="text-xs text-rose-500">{{ 'chat.searchError' | translate }}</p>
+            <button (click)="runSearch()" class="text-xs text-brand-600 dark:text-accent-400 underline">{{ 'common.retry' | translate }}</button>
+          </div>
+          <p *ngIf="searchStatus() === 'ready' && searchResults().length === 0" class="px-3 py-2 text-xs text-slate-400">
+            {{ 'chat.noResults' | translate }}
+          </p>
+          <button *ngFor="let hit of searchResults()" (click)="openHit(hit)"
+            class="w-full text-left p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition space-y-1">
+            <span class="block text-xs font-semibold text-brand-600 dark:text-accent-400">#{{ hit.channelName }} · {{ hit.senderName }}</span>
+            <span class="block text-xs text-slate-600 dark:text-slate-300" [innerHTML]="hit.snippet"></span>
+          </button>
+        </ng-container>
+
+        <!-- Lista de conversaciones -->
+        <ng-container *ngIf="searchStatus() === 'idle'">
+          <p *ngIf="conversationsStatus() === 'loading'" class="px-3 py-4 text-xs text-slate-400">{{ 'common.loading' | translate }}</p>
+
+          <div *ngIf="conversationsStatus() === 'error'" class="px-3 py-4 space-y-2">
+            <p class="text-xs text-rose-500">{{ 'chat.conversationsError' | translate }}</p>
+            <button (click)="loadConversations()" class="text-xs text-brand-600 dark:text-accent-400 underline">{{ 'common.retry' | translate }}</button>
+          </div>
+
+          <p *ngIf="conversationsStatus() === 'ready' && conversations().length === 0" class="px-3 py-4 text-xs text-slate-400">
+            {{ 'chat.noConversations' | translate }}
+          </p>
+
+          <button *ngFor="let c of conversations()" (click)="selectChannel(c.channelId)"
+            [class.bg-brand-50]="activeChannelId() === c.channelId"
+            [class.dark:bg-slate-800]="activeChannelId() === c.channelId"
+            class="w-full flex items-center space-x-3 p-2.5 rounded-xl border-l-4 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/60 transition text-left"
+            [class.border-brand-600]="activeChannelId() === c.channelId">
+            <span class="w-8 h-8 rounded-lg bg-brand-100 dark:bg-slate-700 text-brand-600 dark:text-accent-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
+              {{ c.isPrivate ? '🔒' : '#' }}
+            </span>
+            <span class="flex-1 flex flex-col overflow-hidden">
+              <span class="flex items-center justify-between">
+                <span class="text-sm font-medium truncate text-slate-700 dark:text-slate-200">{{ c.channelName }}</span>
+                <span *ngIf="c.unreadCount > 0" class="ml-2 px-2 py-0.5 text-xs font-extrabold bg-accent-500 text-white rounded-full">
+                  {{ c.unreadCount }}
+                </span>
+              </span>
+              <span class="text-xs text-slate-400 dark:text-slate-500 truncate">{{ c.lastMessagePreview }}</span>
+            </span>
+          </button>
+
+          <button *ngIf="conversationsStatus() === 'ready' && hasMoreConversations"
+            (click)="loadMoreConversations()"
+            class="w-full py-2 text-xs text-brand-600 dark:text-accent-400 hover:underline">
+            {{ 'common.loadMore' | translate }}
+          </button>
+        </ng-container>
+
+      </div>
     </div>
-
   </aside>
 
-  <!-- ================= ÁREA PRINCIPAL DE CHAT ================= -->
+  <!-- ================= PANEL DE MENSAJES ================= -->
   <section class="flex-1 flex flex-col h-full bg-light-bg dark:bg-dark-bg">
-    
-    <!-- Encabezado del Canal Activo -->
-    <header class="h-14 px-6 border-b border-light-border dark:border-dark-border flex items-center justify-between bg-light-surface dark:bg-dark-surface">
-      <div class="flex items-center space-x-3">
-        <span class="font-bold text-lg text-brand-600 dark:text-accent-400">#</span>
-        <h3 class="font-semibold text-base text-slate-800 dark:text-slate-100">
-          {{ activeChannel().name }}
-        </h3>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span class="inline-block w-2.5 h-2.5 rounded-full bg-accent-500"></span>
-        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">En línea</span>
-      </div>
-    </header>
 
-    <!-- Lista de Mensajes / Burbujas -->
-    <div class="flex-1 overflow-y-auto p-6 space-y-4">
-      <div 
-        *ngFor="let msg of messages" 
-        class="flex flex-col"
-        [class.items-end]="msg.isMe"
-        [class.items-start]="!msg.isMe">
-        
-        <!-- Nombre del remitente -->
-        <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-1 px-1">
-          {{ msg.sender }}
-        </span>
-
-        <!-- Burbuja -->
-        <div 
-          class="max-w-[70%] rounded-2xl px-4 py-3 shadow-sm text-sm leading-relaxed"
-          [ngClass]="{
-            'bg-brand-600 text-white rounded-br-none': msg.isMe,
-            'bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border text-slate-800 dark:text-slate-100 rounded-bl-none': !msg.isMe
-          }">
-          <p>{{ msg.text }}</p>
-        </div>
-
-        <!-- Hora -->
-        <span class="text-[10px] text-slate-400 dark:text-slate-500 mt-1 px-1">
-          {{ msg.timestamp }}
-        </span>
-      </div>
+    <!-- Sin canal seleccionado -->
+    <div *ngIf="!activeChannel()" class="flex-1 flex items-center justify-center text-sm text-slate-400">
+      {{ 'chat.selectChannel' | translate }}
     </div>
 
-    <!-- Input Flotante / Inferior de Envío -->
-    <footer class="p-4 bg-light-surface dark:bg-dark-surface border-t border-light-border dark:border-dark-border">
-      <form (submit)="sendMessage(); $event.preventDefault()" class="flex items-center space-x-3 max-w-5xl mx-auto">
-        <input 
-          type="text" 
-          [(ngModel)]="newMessage" 
-          name="chatInput"
-          placeholder="Escribe un mensaje en #{{ activeChannel().name }}..." 
-          class="flex-1 bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition" />
-        
-        <button 
-          type="submit" 
-          class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 rounded-xl transition-all shadow-md font-medium text-sm flex items-center space-x-2">
-          <span>Enviar</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
-        </button>
-      </form>
-    </footer>
+    <ng-container *ngIf="activeChannel() as channel">
+      <header class="h-14 px-6 border-b border-light-border dark:border-dark-border flex items-center justify-between bg-light-surface dark:bg-dark-surface">
+        <div class="flex items-center space-x-3 overflow-hidden">
+          <span class="font-bold text-lg text-brand-600 dark:text-accent-400">{{ channel.isPrivate ? '🔒' : '#' }}</span>
+          <h3 class="font-semibold text-base text-slate-800 dark:text-slate-100 truncate">{{ channel.channelName }}</h3>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button *ngIf="canManageMembers()" (click)="showAddMember.set(true)"
+            class="text-xs px-2.5 py-1 rounded-lg bg-brand-100 dark:bg-slate-700 text-brand-600 dark:text-accent-400 font-medium">
+            + {{ 'chat.addMember' | translate }}
+          </button>
+          <span class="text-xs text-slate-500 dark:text-slate-400">
+            {{ ('chat.realtime.' + realtimeStatus()) | translate }}
+          </span>
+        </div>
+      </header>
 
+      <!-- Lista de mensajes -->
+      <div #messageList (scroll)="onMessagesScroll()" class="flex-1 overflow-y-auto p-6 space-y-4">
+
+        <p *ngIf="loadingOlder()" class="text-center text-xs text-slate-400">{{ 'chat.loadingOlder' | translate }}</p>
+
+        <p *ngIf="messagesStatus() === 'loading'" class="text-center text-sm text-slate-400 py-8">{{ 'common.loading' | translate }}</p>
+
+        <div *ngIf="messagesStatus() === 'error'" class="text-center py-8 space-y-3">
+          <p class="text-sm text-rose-500">{{ 'chat.messagesError' | translate }}</p>
+          <button (click)="loadMessages(channel.channelId)" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm">
+            {{ 'common.retry' | translate }}
+          </button>
+        </div>
+
+        <p *ngIf="messagesStatus() === 'ready' && messages().length === 0" class="text-center text-sm text-slate-400 py-8">
+          {{ 'chat.noMessages' | translate }}
+        </p>
+
+        <div *ngFor="let msg of messages()" class="flex flex-col"
+          [class.items-end]="msg.senderId === myUserId()"
+          [class.items-start]="msg.senderId !== myUserId()">
+
+          <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-1 px-1">{{ msg.senderName }}</span>
+
+          <div class="max-w-[70%] rounded-2xl px-4 py-3 shadow-sm text-sm leading-relaxed"
+            [ngClass]="{
+              'bg-brand-600 text-white rounded-br-none': msg.senderId === myUserId(),
+              'bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border text-slate-800 dark:text-slate-100 rounded-bl-none': msg.senderId !== myUserId()
+            }">
+
+            <!-- Modo edicion -->
+            <div *ngIf="editingId() === msg.id" class="space-y-2">
+              <textarea [(ngModel)]="editBody" name="editBody" rows="2"
+                class="w-full text-slate-800 dark:text-slate-100 bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-lg px-3 py-2 text-sm"></textarea>
+              <div class="flex space-x-2">
+                <button (click)="saveEdit(msg)" class="text-xs px-3 py-1 rounded-lg bg-brand-700 text-white">{{ 'common.save' | translate }}</button>
+                <button (click)="cancelEdit()" class="text-xs px-3 py-1 rounded-lg bg-slate-500 text-white">{{ 'common.cancel' | translate }}</button>
+              </div>
+            </div>
+
+            <!-- Modo lectura -->
+            <p *ngIf="editingId() !== msg.id">{{ msg.body }}</p>
+            <span *ngIf="editingId() !== msg.id && msg.editedAt" class="block text-[10px] opacity-70 mt-1">
+              {{ 'chat.edited' | translate }}
+            </span>
+          </div>
+
+          <div class="flex items-center space-x-2 mt-1 px-1">
+            <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ msg.createdAt | date: 'shortTime' }}</span>
+
+            <!-- Estado del mensaje propio -->
+            <span *ngIf="msg.senderId === myUserId()" class="text-[10px] font-medium"
+              [ngClass]="{
+                'text-amber-500': msg.state === 'pending',
+                'text-emerald-500': msg.state === 'sent',
+                'text-rose-500': msg.state === 'failed'
+              }">
+              {{ ('chat.messageState.' + msg.state) | translate }}
+            </span>
+
+            <button *ngIf="msg.state === 'failed'" (click)="retry(msg)" class="text-[10px] text-brand-600 dark:text-accent-400 underline">
+              {{ 'chat.retry' | translate }}
+            </button>
+            <button *ngIf="canEdit(msg)" (click)="startEdit(msg)" class="text-[10px] text-slate-400 hover:text-brand-600 underline">
+              {{ 'chat.edit' | translate }}
+            </button>
+            <button *ngIf="canDelete(msg)" (click)="deleteMessage(msg)" class="text-[10px] text-slate-400 hover:text-rose-500 underline">
+              {{ 'chat.delete' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input de envio -->
+      <footer class="p-4 bg-light-surface dark:bg-dark-surface border-t border-light-border dark:border-dark-border">
+        <form (submit)="sendMessage(); $event.preventDefault()" class="flex items-center space-x-3 max-w-5xl mx-auto">
+          <input type="text" [(ngModel)]="newMessage" name="chatInput"
+            [placeholder]="'chat.inputPlaceholder' | translate"
+            class="flex-1 bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 rounded-xl shadow-md font-medium text-sm">
+            {{ 'common.send' | translate }}
+          </button>
+        </form>
+      </footer>
+    </ng-container>
   </section>
+
+  <!-- ================= MODAL: CREAR CANAL ================= -->
+  <div *ngIf="showCreate()" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+    <div class="bg-light-surface dark:bg-dark-surface rounded-2xl p-6 w-full max-w-md space-y-4 shadow-xl">
+      <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ 'chat.createTitle' | translate }}</h3>
+      <form (submit)="submitCreateChannel(); $event.preventDefault()" class="space-y-3">
+        <input type="text" [(ngModel)]="createName" name="createName"
+          [placeholder]="'chat.channelName' | translate"
+          class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm" />
+        <input type="text" [(ngModel)]="createDescription" name="createDescription"
+          [placeholder]="'chat.channelDescription' | translate"
+          class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm" />
+        <label class="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-300">
+          <input type="checkbox" [(ngModel)]="createPrivate" name="createPrivate" class="w-4 h-4 accent-brand-600" />
+          <span>{{ 'chat.privateChannel' | translate }}</span>
+        </label>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" (click)="showCreate.set(false)" class="px-4 py-2 rounded-xl bg-slate-500 text-white text-sm">{{ 'common.cancel' | translate }}</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm">{{ 'chat.create' | translate }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: AGREGAR MIEMBRO ================= -->
+  <div *ngIf="showAddMember()" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+    <div class="bg-light-surface dark:bg-dark-surface rounded-2xl p-6 w-full max-w-md space-y-4 shadow-xl">
+      <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ 'chat.addMember' | translate }}</h3>
+      <form (submit)="submitAddMember(); $event.preventDefault()" class="space-y-3">
+        <input type="text" [(ngModel)]="memberUserId" name="memberUserId"
+          [placeholder]="'chat.memberUserId' | translate"
+          class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm" />
+        <select [(ngModel)]="memberRole" name="memberRole"
+          class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm">
+          <option value="member">{{ 'chat.roleMember' | translate }}</option>
+          <option value="admin">{{ 'chat.roleAdmin' | translate }}</option>
+        </select>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" (click)="showAddMember.set(false)" class="px-4 py-2 rounded-xl bg-slate-500 text-white text-sm">{{ 'common.cancel' | translate }}</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm">{{ 'chat.addMember' | translate }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
 </div>

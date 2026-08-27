@@ -13,6 +13,14 @@
   "auth": {
     "logout": "Cerrar sesión"
   },
+  "common": {
+    "loading": "Cargando...",
+    "retry": "Reintentar",
+    "loadMore": "Cargar más",
+    "send": "Enviar",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
   "login": {
     "title": "Iniciar sesión",
     "subtitle": "Accede a la plataforma de mensajería Riwi",
@@ -65,5 +73,84 @@
       "emailTaken": "Ese correo ya está registrado",
       "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
     }
+  },
+  "chat": {
+    "sidebarTitle": "Canales y chats",
+    "toggleSidebar": "Mostrar u ocultar la barra lateral",
+    "searchPlaceholder": "Buscar mensajes...",
+    "searchButton": "Buscar",
+    "searchResults": "Resultados de búsqueda",
+    "searching": "Buscando...",
+    "searchError": "No se pudo completar la búsqueda.",
+    "noResults": "Sin resultados para esa búsqueda.",
+    "newChannel": "Nuevo canal",
+    "conversationsError": "No se pudieron cargar las conversaciones.",
+    "noConversations": "Todavía no tienes conversaciones.",
+    "selectChannel": "Selecciona un canal para ver los mensajes.",
+    "messagesError": "No se pudieron cargar los mensajes.",
+    "noMessages": "Aún no hay mensajes en este canal.",
+    "loadingOlder": "Cargando mensajes anteriores...",
+    "inputPlaceholder": "Escribe un mensaje...",
+    "retry": "Reintentar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "edited": "editado",
+    "addMember": "Agregar miembro",
+    "memberUserId": "ID del usuario",
+    "roleMember": "Miembro",
+    "roleAdmin": "Administrador",
+    "createTitle": "Crear canal",
+    "channelName": "Nombre del canal",
+    "channelDescription": "Descripción (opcional)",
+    "privateChannel": "Canal privado",
+    "create": "Crear",
+    "messageState": {
+      "pending": "Pendiente",
+      "sent": "Enviado",
+      "failed": "Fallido"
+    },
+    "realtime": {
+      "connecting": "Conectando...",
+      "open": "En línea",
+      "closed": "Sin conexión"
+    }
+  },
+  "copilot": {
+    "title": "Copiloto de IA",
+    "historyTitle": "Historial",
+    "toggleHistory": "Mostrar u ocultar el historial",
+    "recentQueries": "Consultas recientes",
+    "historyError": "No se pudo cargar el historial.",
+    "historyEmpty": "Todavía no has hecho consultas.",
+    "usageTitle": "Consumo acumulado",
+    "usageError": "No se pudo cargar el consumo.",
+    "usageEmpty": "Sin consumo registrado.",
+    "usageQueries": "Consultas",
+    "usageAnswered": "Respondidas",
+    "usageRefused": "Rechazadas",
+    "usageTokens": "Tokens totales",
+    "emptyState": "Hazle una pregunta al copiloto sobre tus conversaciones.",
+    "inputPlaceholder": "Pregúntale algo al copiloto...",
+    "thinking": "El copiloto está procesando la consulta...",
+    "askError": "No se pudo enviar la consulta. Inténtalo de nuevo.",
+    "citations": "Fuentes citadas",
+    "status": {
+      "answered": "Respuesta",
+      "refused_no_context": "Sin contexto suficiente",
+      "refused_permission": "Sin permiso para ese contenido",
+      "error": "Error del copiloto"
+    }
+  },
+  "profile": {
+    "title": "Perfil de usuario",
+    "subtitle": "Datos de tu cuenta en la plataforma.",
+    "error": "No se pudo cargar el perfil.",
+    "platformAdmin": "Administrador de plataforma",
+    "accountData": "Datos de la cuenta",
+    "fullName": "Nombre completo",
+    "jobTitle": "Cargo",
+    "email": "Correo electrónico",
+    "visibleConversations": "Conversaciones visibles",
+    "editUnavailable": "Edición no disponible en esta versión."
   }
 }

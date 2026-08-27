@@ -1,123 +1,159 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { CopilotService } from './copilot.service';
+import {
+  CopilotHistoryResponse,
+  CopilotTurn,
+  CopilotUsageResponse
+} from './copilot.models';
 
-interface CopilotMessage {
-  id: string;
-  sender: 'user' | 'assistant';
-  text: string;
-  codeSnippet?: string;
-  codeLanguage?: string;
-  timestamp: string;
-}
-
-interface PromptSuggestion {
-  title: string;
-  description: string;
-  prompt: string;
-  icon: string;
-}
+// tres estados para las listas async de esta vista
+type AsyncStatus = 'loading' | 'error' | 'ready';
 
 @Component({
   selector: 'app-copilot',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, RouterLink],
   templateUrl: 'copilot.component.html',
   styleUrl: './copilot.component.css'
 })
-export class CopilotComponent {
+export class CopilotComponent implements OnInit {
+  private copilot = inject(CopilotService);
+
   userQuery = '';
+
+  // true mientras esperamos la respuesta del copiloto
   isThinking = signal<boolean>(false);
+
+  // se pone en true si la ultima consulta fallo por red
+  askFailed = signal<boolean>(false);
+
+  // intercambios pregunta/respuesta que se muestran en el area principal
+  turns = signal<CopilotTurn[]>([]);
+
+  // ----- historial persistido -----
   isHistoryOpen = signal<boolean>(true);
+  history = signal<CopilotHistoryResponse[]>([]);
+  historyStatus = signal<AsyncStatus>('loading');
+  private historyCursor: string | null = null;
 
-  // Historial de prompts de la sesión
-  recentPrompts = signal<string[]>([
-    'Refactorizar servicio de autenticación',
-    'Explicar política de CORS en Angular 19',
-    'Optimizar consultas de base de datos SQL'
-  ]);
+  // ----- consumo acumulado -----
+  usage = signal<CopilotUsageResponse | null>(null);
+  usageStatus = signal<AsyncStatus>('loading');
 
-  // Sugerencias rápidas
-  suggestions: PromptSuggestion[] = [
-    {
-      title: 'Revisar Código',
-      description: 'Analiza tu código en busca de errores o cuellos de botella.',
-      prompt: '¿Puedes revisar este fragmento de código y sugerir mejoras de rendimiento?',
-      icon: '🔍'
-    },
-    {
-      title: 'Redactar Mensaje',
-      description: 'Genera un comunicado técnico para el equipo.',
-      prompt: 'Redacta un mensaje para el canal de equipo explicando el nuevo release.',
-      icon: '✍️'
-    },
-    {
-      title: 'Explicar Arquitectura',
-      description: 'Aprende patrones y buenas prácticas.',
-      prompt: 'Explícame la diferencia entre Signals y RxJS Subjects en Angular con ejemplos.',
-      icon: '💡'
-    }
-  ];
-
-  // Conversación actual
-  messages = signal<CopilotMessage[]>([
-    {
-      id: '1',
-      sender: 'assistant',
-      text: '¡Hola! Soy tu Copiloto. ¿En qué puedo ayudarte hoy con la plataforma o tus proyectos?',
-      timestamp: '09:00 AM'
-    }
-  ]);
-
-  toggleHistory() {
-    this.isHistoryOpen.update(v => !v);
+  ngOnInit(): void {
+    this.loadHistory();
+    this.loadUsage();
   }
 
-  useSuggestion(promptText: string) {
-    this.userQuery = promptText;
-    this.sendQuery();
+  toggleHistory(): void {
+    this.isHistoryOpen.update((v) => !v);
   }
 
-  sendQuery() {
-    if (!this.userQuery.trim()) return;
+  send(): void {
+    const question = this.userQuery.trim();
+    if (!question || this.isThinking()) {
+      return;
+    }
+    this.userQuery = '';
+    this.askFailed.set(false);
+    this.isThinking.set(true);
+    // preguntamos al copiloto
+    this.copilot.ask(question).subscribe({
+      next: (res) => {
+        this.turns.update((list) => [
+          ...list,
+          {
+            question,
+            answer: res.answer,
+            status: res.status,
+            citations: res.citations,
+            usage: res.usage
+          }
+        ]);
+        this.isThinking.set(false);
+        this.refreshAfterAsk();
+      },
+      error: () => {
+        this.isThinking.set(false);
+        this.askFailed.set(true);
+        this.userQuery = question;
+      }
+    });
+  }
 
-    const queryText = this.userQuery;
-    const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  private refreshAfterAsk(): void {
+    // tras una consulta nueva volvemos a cargar historial y consumo
+    this.historyCursor = null;
+    this.loadHistory();
+    this.loadUsage();
+  }
 
-    // 1. Agregar mensaje del usuario
-    this.messages.update(msgs => [
-      ...msgs,
+  // ----- historial -----
+
+  loadHistory(): void {
+    this.historyStatus.set('loading');
+    // primera pagina del historial del actor
+    this.copilot.history(null).subscribe({
+      next: (page) => {
+        this.history.set(page.items);
+        this.historyCursor = page.nextCursor;
+        this.historyStatus.set('ready');
+      },
+      error: () => this.historyStatus.set('error')
+    });
+  }
+
+  loadMoreHistory(): void {
+    if (!this.historyCursor) {
+      return;
+    }
+    // siguiente pagina del historial con el cursor keyset
+    this.copilot.history(this.historyCursor).subscribe({
+      next: (page) => {
+        this.history.set([...this.history(), ...page.items]);
+        this.historyCursor = page.nextCursor;
+      },
+      error: () => {}
+    });
+  }
+
+  get hasMoreHistory(): boolean {
+    return this.historyCursor !== null;
+  }
+
+  openFromHistory(entry: CopilotHistoryResponse): void {
+    // mostramos una entrada guardada como un intercambio mas en pantalla
+    this.turns.update((list) => [
+      ...list,
       {
-        id: Date.now().toString(),
-        sender: 'user',
-        text: queryText,
-        timestamp: timeNow
+        question: entry.question,
+        answer: entry.answer,
+        status: entry.status,
+        citations: [],
+        usage: {
+          promptTokens: entry.promptTokens,
+          completionTokens: entry.completionTokens,
+          totalTokens: entry.totalTokens
+        }
       }
     ]);
+  }
 
-    this.userQuery = '';
-    this.isThinking.set(true);
+  // ----- consumo -----
 
-    // 2. Simulación de respuesta generativa con delay
-    setTimeout(() => {
-      this.isThinking.set(false);
-      this.messages.update(msgs => [
-        ...msgs,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: 'assistant',
-          text: `Entendido. He procesado tu solicitud sobre: "${queryText}". Aquí tienes la propuesta estructurada:`,
-          codeSnippet: `// Ejemplo de implementación sugerida\nexport class CopilotService {\n  readonly state = signal<string>('Ready');\n\n  execute() {\n    console.log('Procesando solicitud en segundo plano...');\n  }\n}`,
-          codeLanguage: 'typescript',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-
-      // Guardar en el historial lateral
-      if (!this.recentPrompts().includes(queryText)) {
-        this.recentPrompts.update(prev => [queryText, ...prev.slice(0, 4)]);
-      }
-    }, 1200);
+  loadUsage(): void {
+    this.usageStatus.set('loading');
+    // traemos el consumo acumulado del actor
+    this.copilot.usage().subscribe({
+      next: (rows) => {
+        this.usage.set(rows[0] ?? null);
+        this.usageStatus.set('ready');
+      },
+      error: () => this.usageStatus.set('error')
+    });
   }
 }
