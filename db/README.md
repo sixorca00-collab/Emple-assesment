@@ -81,7 +81,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -v seed_path=/ruta/a/seed.json -f db/see
 Notas:
 
 - `seed_loader.sql` es **idempotente**: hace `TRUNCATE ... CASCADE` y recarga.
-- Genera **embeddings sinteticos** (aleatorios) para que la Consulta 3 sea probable sin llamar al proveedor de IA. El backend los sobrescribe con embeddings reales (`text-embedding-3-small`, 1536 dimensiones) al indexar los mensajes.
+- Genera **embeddings sinteticos** (aleatorios) para que la Consulta 3 sea probable sin llamar al proveedor de IA. El backend los sobrescribe con embeddings reales (Gemini `gemini-embedding-001`, recortados a 1536 dimensiones) al indexar los mensajes.
 - Todas las contrasenas del corpus son `Password123!` (hash bcrypt cost 10).
 - Tambien funciona ejecutado como `riwi_app`: la funcion fija el actor por fila (`rw_set_current_user`) para cumplir las politicas RLS de insercion.
 
