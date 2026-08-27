@@ -46,6 +46,20 @@ riwi:
     access-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:15}
     refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
 
+springdoc:
+  api-docs:
+    # contrato OpenAPI en JSON (y en YAML bajo /v3/api-docs.yaml)
+    path: /v3/api-docs
+  swagger-ui:
+    # UI interactiva del contrato
+    path: /swagger-ui.html
+    # agrupamos y ordenamos las operaciones para una lectura estable
+    operations-sorter: alpha
+    tags-sorter: alpha
+  # salida determinista del contrato: evita ruido en git al regenerar docs/openapi.yaml
+  writer-with-order-by-keys: true
+  writer-with-default-pretty-printer: true
+
 logging:
   pattern:
     # incluimos el correlation id en cada linea de log via MDC

@@ -29,6 +29,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // /ws/** se autentica en el handshake (JwtHandshakeInterceptor), no con el filtro Bearer
                         .requestMatchers("/auth/**", "/health", "/ws/**").permitAll()
+                        // documentacion de la API: Swagger UI y contrato OpenAPI publicos
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
+                                "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
                 // el filtro JWT corre antes del filtro estandar de usuario/clave

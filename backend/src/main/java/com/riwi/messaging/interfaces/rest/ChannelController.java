@@ -17,11 +17,17 @@ import com.riwi.messaging.interfaces.rest.dto.ChannelResponse;
 import com.riwi.messaging.interfaces.rest.dto.ConversationResponse;
 import com.riwi.messaging.interfaces.rest.dto.CreateChannelRequest;
 import com.riwi.messaging.interfaces.rest.dto.AddMemberRequest;
+import com.riwi.messaging.interfaces.rest.dto.ErrorResponse;
 import com.riwi.messaging.interfaces.rest.dto.MarkReadResponse;
 import com.riwi.messaging.interfaces.rest.dto.MessageResponse;
 import com.riwi.messaging.interfaces.rest.dto.PageResponse;
 import com.riwi.messaging.interfaces.rest.dto.PostMessageRequest;
 import com.riwi.messaging.interfaces.rest.support.CursorCodec;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +44,7 @@ import java.util.List;
 import java.util.UUID;
 
 // endpoints de canales y de mensajes dentro de un canal; el actor se propaga a RLS via TransactionActorAspect
+@Tag(name = "Canales", description = "Conversaciones, canales, miembros e historial de mensajes")
 @RestController
 @RequestMapping("/channels")
 public class ChannelController {
@@ -63,6 +70,7 @@ public class ChannelController {
         this.markChannelRead = markChannelRead;
     }
 
+    @Operation(summary = "Lista las conversaciones del actor con keyset pagination")
     @GetMapping
     public PageResponse<ConversationResponse> list(@RequestParam(required = false) String cursor,
                                                   @RequestParam(required = false) Integer size) {
@@ -72,6 +80,8 @@ public class ChannelController {
         return new PageResponse<>(items, CursorCodec.encode(page.nextCursor()));
     }
 
+    @Operation(summary = "Crea un canal; el actor queda como owner")
+    @ApiResponse(responseCode = "201", description = "Canal creado")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ChannelResponse create(@Valid @RequestBody CreateChannelRequest request) {
@@ -81,6 +91,12 @@ public class ChannelController {
         return ChannelResponse.from(created);
     }
 
+    @Operation(summary = "Agrega un miembro al canal (solo owner/admin del canal)")
+    @ApiResponse(responseCode = "204", description = "Miembro agregado")
+    @ApiResponse(responseCode = "403", description = "El actor no es owner/admin del canal",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Canal o usuario inexistente",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/{channelId}/members")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addMember(@PathVariable UUID channelId, @Valid @RequestBody AddMemberRequest request) {
@@ -88,6 +104,9 @@ public class ChannelController {
         addChannelMember.execute(new AddMemberCommand(channelId, request.userId(), request.role()));
     }
 
+    @Operation(summary = "Historial de mensajes del canal con keyset pagination")
+    @ApiResponse(responseCode = "403", description = "El actor no es miembro del canal",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/{channelId}/messages")
     public PageResponse<MessageResponse> history(@PathVariable UUID channelId,
                                                  @RequestParam(required = false) String cursor,
@@ -98,6 +117,10 @@ public class ChannelController {
         return new PageResponse<>(items, CursorCodec.encode(page.nextCursor()));
     }
 
+    @Operation(summary = "Publica un mensaje en el canal y emite el evento en tiempo real")
+    @ApiResponse(responseCode = "201", description = "Mensaje publicado")
+    @ApiResponse(responseCode = "403", description = "El actor no es miembro del canal",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/{channelId}/messages")
     @ResponseStatus(HttpStatus.CREATED)
     public MessageResponse post(@PathVariable UUID channelId, @Valid @RequestBody PostMessageRequest request) {
@@ -107,6 +130,7 @@ public class ChannelController {
         return MessageResponse.from(sent);
     }
 
+    @Operation(summary = "Marca como leidos los mensajes ajenos vivos del canal")
     @PostMapping("/{channelId}/read")
     public MarkReadResponse read(@PathVariable UUID channelId) {
         // marca leidos los mensajes ajenos vivos del canal
