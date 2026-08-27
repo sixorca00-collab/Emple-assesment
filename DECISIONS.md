@@ -166,3 +166,31 @@ Estado: parcial — cubre el esqueleto + autenticación (D2 bloque 5-6). Se ampl
 **Tests (Testcontainers, puertos de IA mockeados — nunca se llama a Groq/OpenAI):** `FakeAiConfig` inyecta un `EmbeddingPort` determinista (mismo texto → mismo vector) y un `RecordingChatPort` (texto fijo, cuenta tokens, guarda el último prompt). Cubren: recuperación respeta membresía, `refused_no_context`, `refused_permission`, citas = mensajes recuperados + persistencia de `rw_copilot_query`/`rw_copilot_citation`, Consulta 4 (suma de tokens y aislamiento por actor / desglose admin), historial keyset sin fuga entre usuarios, contexto no confiable delimitado, `question` vacía → 400, y backfill admin-only que puebla embeddings faltantes.
 
 **Fuera de alcance:** inferencia asíncrona/cola, re-embedding incremental automático tras editar un mensaje (el trigger ya invalida el vector; el backfill lo recalcula bajo demanda), streaming de la respuesta del copiloto, y la verificación de la llamada HTTP real a Groq/OpenAI (no se testea, solo los adaptadores quedan cableados por config).
+
+---
+
+## D10. Despliegue (`docker compose`) y cierre de agujeros del copiloto
+
+**Decisión:** `docker compose up` levanta `db + migrator + backend + frontend` de una sola vez, en limpio, siguiendo el `README.md`.
+
+**docker-compose:**
+- **db** `pgvector/pgvector:pg16`, volumen nombrado `db_data`, healthcheck `pg_isready`. Puerto/credenciales del `.env`.
+- **migrator** — imagen propia (`db/Dockerfile`, `FROM flyway/flyway:10-alpine` + `apk add postgresql-client`). One-shot: corre Flyway `V1..V6` como `riwi_root`, luego `ALTER ROLE riwi_app PASSWORD` con la password real de `DB_APP_PASSWORD` (V2 lo crea con una por defecto), luego carga `seed.json` reutilizando `db/seed_loader.sql`. **Idempotente**: el seed solo se carga si `rw_user` está vacío (o `SEED_FORCE=true`), así `docker compose up` dos veces no pisa datos de runtime. `backend` hace `depends_on: migrator: service_completed_successfully`.
+- **backend** — `backend/Dockerfile` multi-stage (Maven build → `eclipse-temurin:21-jre-jammy` + `curl` para el healthcheck). Se conecta como `riwi_app`. Arranca con `EMBEDDINGS_BACKFILL_ON_STARTUP=true` + `EMBEDDINGS_BACKFILL_MODE=all` fijados en el compose (no en `.env`), para que tras `up` con API keys el corpus del seed quede con embeddings reales.
+- **frontend** — `frontend/Dockerfile` multi-stage (`node:20-alpine` `npm ci && npm run build` → `nginx:1.27-alpine` sirviendo `dist/frontend/browser`), `nginx.conf` con `try_files $uri $uri/ /index.html`.
+- **Comando manual de migraciones/seed:** `docker compose run --rm [-e SEED_FORCE=true] migrator` o `scripts/db.sh {migrate|seed}` (documentado en `README` §3).
+
+**`API_BASE_URL` del frontend:** `api.config.ts` es una constante **build-time**. Como no se puede tocar `frontend/src/`, el `frontend/Dockerfile` hace `sed` sobre una copia del archivo dentro del contenedor de build, tomando el valor del build-arg `API_BASE_URL` (default `http://localhost:8080`, que ya sirve para el compose local). Se eligió build-arg + `sed` por ser lo más simple; la alternativa (generar `env.js` en el entrypoint de nginx) exigía cambios en `index.html` y en el código Angular.
+
+**Agujeros del copiloto cerrados:**
+- **B1 — el adaptador de embeddings ahora envía `"dimensions"`** en el body (`AI_EMBEDDING_DIMENSIONS`, default 1536). Sin esto, Gemini (`gemini-embedding-001`) devuelve 3072 y todo falla. Sigue validando que la respuesta tenga esa dimensión. Test unitario `OpenAiEmbeddingAdapterTest` con `MockRestServiceServer` enlazado al `RestClient.Builder` (por eso el adaptador ahora recibe el builder inyectado en vez de crearlo). 
+- **B2 — modo `EMBEDDINGS_BACKFILL_MODE=missing|all`** (default `missing`). `all` re-embebe todos los mensajes vivos vía la nueva función `rw_messages_for_reembedding` (V6, SECURITY DEFINER) y sobrescribe los embeddings **sintéticos** que `seed_loader.sql` genera para los tests. No se tocó `seed_loader.sql` ni los tests existentes (siguen con `DeterministicEmbeddingPort` + vectores sintéticos); el modo `all` es aditivo.
+- **B3 — `GET /internal/copilot/status`** (solo `is_platform_admin`): `totalMessages`, `messagesWithEmbedding` (función V6 `rw_message_embedding_stats`), `embeddingModel`, `chatModel`, y `embeddingProviderReachable` / `chatProviderReachable` (ping real: un embedding de "ping" y un chat de un turno mínimo, `true` si respondió).
+- **B4 — `CopilotLiveIT`** anotado `@EnabledIfEnvironmentVariable` para `AI_CHAT_API_KEY` y `AI_EMBEDDING_API_KEY`: no corre en `mvn test` sin keys. Con keys: dimensión real == `AI_EMBEDDING_DIMENSIONS`, chat real con `usage` > 0, y end-to-end (seed → backfill `all` real → `POST /copilot/query`) con `answered`+citas para una pregunta del corpus y `refused_no_context` fuera de contexto. Comando: `mvn -f backend/pom.xml test -Dtest=CopilotLiveIT`.
+- **B5 — model id de Groq:** `.env.example` deja el comentario con el fallback `llama-3.1-8b-instant` (límite diario más alto) por si `llama-3.3-70b-versatile` está deprecado el día del demo.
+
+**Migración nueva V6 (`db/migrations/V6__copilot_ops.sql`):** `rw_messages_for_reembedding(int)` y `rw_message_embedding_stats()`, ambas SECURITY DEFINER con `GRANT EXECUTE` solo a `riwi_app`. No toca V1..V5.
+
+**Verificado:** `mvn -f backend/pom.xml test` en verde (50 tests, `CopilotLiveIT` saltado sin keys). `docker compose config` válido.
+
+**Fuera de alcance:** hot-reload de `API_BASE_URL` sin rebuild del frontend, TLS/reverse-proxy de producción, y correr `CopilotLiveIT` en CI (requiere secretos).
