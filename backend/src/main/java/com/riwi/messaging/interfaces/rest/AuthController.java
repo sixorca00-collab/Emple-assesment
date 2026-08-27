@@ -6,12 +6,16 @@ import com.riwi.messaging.application.auth.LogoutCommand;
 import com.riwi.messaging.application.auth.LogoutUseCase;
 import com.riwi.messaging.application.auth.RefreshCommand;
 import com.riwi.messaging.application.auth.RefreshTokenUseCase;
+import com.riwi.messaging.application.auth.RegisterCommand;
+import com.riwi.messaging.application.auth.RegisterUserUseCase;
 import com.riwi.messaging.domain.model.AuthTokens;
 import com.riwi.messaging.interfaces.rest.dto.LoginRequest;
 import com.riwi.messaging.interfaces.rest.dto.LogoutRequest;
 import com.riwi.messaging.interfaces.rest.dto.RefreshRequest;
+import com.riwi.messaging.interfaces.rest.dto.RegisterRequest;
 import com.riwi.messaging.interfaces.rest.dto.TokenResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,15 +31,18 @@ import java.time.Duration;
 public class AuthController {
 
     private final LoginUseCase loginUseCase;
+    private final RegisterUserUseCase registerUserUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final LogoutUseCase logoutUseCase;
     private final Clock clock;
 
     public AuthController(LoginUseCase loginUseCase,
+                          RegisterUserUseCase registerUserUseCase,
                           RefreshTokenUseCase refreshTokenUseCase,
                           LogoutUseCase logoutUseCase,
                           Clock clock) {
         this.loginUseCase = loginUseCase;
+        this.registerUserUseCase = registerUserUseCase;
         this.refreshTokenUseCase = refreshTokenUseCase;
         this.logoutUseCase = logoutUseCase;
         this.clock = clock;
@@ -46,6 +53,14 @@ public class AuthController {
         // delegamos al caso de uso; el mapeo DTO -> command es directo
         AuthTokens tokens = loginUseCase.execute(new LoginCommand(request.email(), request.password()));
         return ResponseEntity.ok(toResponse(tokens));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<TokenResponse> register(@Valid @RequestBody RegisterRequest request) {
+        // crea la cuenta y devuelve el mismo par de tokens que login (auto-login)
+        AuthTokens tokens = registerUserUseCase.execute(new RegisterCommand(
+                request.name(), request.jobTitle(), request.email(), request.password()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(tokens));
     }
 
     @PostMapping("/refresh")
