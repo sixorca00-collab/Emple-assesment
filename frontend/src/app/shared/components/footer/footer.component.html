@@ -1,0 +1,17 @@
+<footer class="w-full bg-light-surface dark:bg-dark-surface border-t border-light-border dark:border-dark-border py-4 px-6 text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+    
+    <!-- Nombre Empresa y Derechos -->
+    <div class="flex items-center space-x-2">
+      <span class="font-semibold text-brand-600 dark:text-accent-400">{{ companyName }}</span>
+      <span>&copy; {{ currentYear }} {{ 'all Rights Reserved' | translate }}</span>
+    </div>
+
+    <!-- Crédito Desarrollador -->
+    <div class="flex items-center space-x-1">
+      <span>{{ 'Developed By' | translate }}</span>
+      <span class="font-medium text-slate-700 dark:text-slate-200">{{ developerName }}</span>
+    </div>
+
+  </div>
+</footer>

@@ -1,0 +1,58 @@
+<header class="bg-brand-dark text-white h-16 px-6 flex items-center justify-between border-b border-brand-700 shadow-md">
+  <!-- Logo y Navegación principal -->
+  <div class="flex items-center space-x-8">
+    <div class="flex items-center space-x-2">
+      <span class="font-extrabold text-xl text-accent-400 tracking-wider">&lt;/Riwi&gt;</span>
+    </div>
+    
+    <nav class="flex space-x-1">
+      <a routerLink="/chat" routerLinkActive="bg-brand-600 text-white" 
+         class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
+        {{ 'nav.chat' | translate }}
+      </a>
+      <a routerLink="/copilot" routerLinkActive="bg-brand-600 text-white" 
+         class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
+        {{ 'nav.copilot' | translate }}
+      </a>
+      <a routerLink="/profile" routerLinkActive="bg-brand-600 text-white"
+         class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
+        {{ 'nav.profile' | translate }}
+      </a>
+      <!-- enlace de gestion de usuarios: solo visible para administradores de plataforma -->
+      <a *ngIf="auth.currentUser()?.isPlatformAdmin"
+         routerLink="/admin/users" routerLinkActive="bg-brand-600 text-white"
+         class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
+        {{ 'nav.admin' | translate }}
+      </a>
+    </nav>
+  </div>
+
+  <!-- Switch de Idioma y Modo Noche -->
+  <div class="flex items-center space-x-4">
+    <!-- Selector de idioma ES/EN -->
+    <div class="flex bg-brand-700 p-1 rounded-lg text-xs font-semibold">
+      <button (click)="changeLanguage('es')" class="px-2.5 py-1 rounded-md hover:bg-brand-600 focus:bg-brand-500 transition">ES</button>
+      <button (click)="changeLanguage('en')" class="px-2.5 py-1 rounded-md hover:bg-brand-600 focus:bg-brand-500 transition">EN</button>
+    </div>
+
+    <!-- Botón Toggle Modo Oscuro -->
+<button (click)="themeService.toggleTheme()" class="p-2 rounded-lg bg-brand-700 hover:bg-brand-600 text-accent-300 transition-colors" [title]="'theme.toggle' | translate">
+  <span *ngIf="!themeService.isDarkMode()">🌙</span>
+  <span *ngIf="themeService.isDarkMode()">☀️</span>
+</button>
+
+    <!-- Nombre del usuario autenticado, tomado de los claims del token -->
+    <span *ngIf="auth.currentUser() as user" class="text-xs font-semibold text-accent-300 hidden sm:inline">
+      {{ user.name }}
+    </span>
+
+    <!-- Botón de cerrar sesión: solo visible con sesión activa -->
+    <button
+      *ngIf="auth.isLoggedIn()"
+      (click)="logout()"
+      class="px-3 py-2 rounded-lg text-xs font-semibold bg-brand-700 hover:bg-brand-600 transition-colors"
+    >
+      {{ 'auth.logout' | translate }}
+    </button>
+  </div>
+</header>

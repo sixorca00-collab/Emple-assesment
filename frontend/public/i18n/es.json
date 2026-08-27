@@ -1,0 +1,181 @@
+{
+  "app": {
+    "title": "Riwi Messenger"
+  },
+  "nav": {
+    "chat": "Conversación",
+    "copilot": "Copiloto",
+    "profile": "Perfil",
+    "admin": "Usuarios"
+  },
+  "theme": {
+    "toggle": "Cambiar tema"
+  },
+  "auth": {
+    "logout": "Cerrar sesión"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "retry": "Reintentar",
+    "loadMore": "Cargar más",
+    "send": "Enviar",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "subtitle": "Accede a la plataforma de mensajería Riwi",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tu.correo@riwi.io",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Tu contraseña",
+    "submit": "Entrar",
+    "loading": "Entrando...",
+    "noAccount": "¿No tienes cuenta?",
+    "createAccount": "Crear cuenta",
+    "validation": {
+      "emailRequired": "El correo es obligatorio",
+      "emailInvalid": "El correo no tiene un formato válido",
+      "passwordRequired": "La contraseña es obligatoria"
+    },
+    "error": {
+      "invalid": "Correo o contraseña incorrectos",
+      "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
+    }
+  },
+  "register": {
+    "title": "Crear cuenta",
+    "subtitle": "Regístrate en la plataforma de mensajería Riwi",
+    "name": "Nombre completo",
+    "namePlaceholder": "Ana Ruiz",
+    "jobTitle": "Cargo",
+    "jobTitlePlaceholder": "Desarrolladora de software",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tu.correo@riwi.io",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Mínimo 8 caracteres",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Repite la contraseña",
+    "submit": "Registrarme",
+    "loading": "Creando cuenta...",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "link": "Inicia sesión",
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "jobTitleRequired": "El cargo es obligatorio",
+      "emailRequired": "El correo es obligatorio",
+      "emailInvalid": "El correo no tiene un formato válido",
+      "passwordRequired": "La contraseña es obligatoria",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+      "confirmPasswordRequired": "Confirma la contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden"
+    },
+    "error": {
+      "emailTaken": "Ese correo ya está registrado",
+      "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
+    }
+  },
+  "chat": {
+    "sidebarTitle": "Canales y chats",
+    "toggleSidebar": "Mostrar u ocultar la barra lateral",
+    "searchPlaceholder": "Buscar mensajes...",
+    "searchButton": "Buscar",
+    "searchResults": "Resultados de búsqueda",
+    "searching": "Buscando...",
+    "searchError": "No se pudo completar la búsqueda.",
+    "noResults": "Sin resultados para esa búsqueda.",
+    "newChannel": "Nuevo canal",
+    "conversationsError": "No se pudieron cargar las conversaciones.",
+    "noConversations": "Todavía no tienes conversaciones.",
+    "selectChannel": "Selecciona un canal para ver los mensajes.",
+    "messagesError": "No se pudieron cargar los mensajes.",
+    "noMessages": "Aún no hay mensajes en este canal.",
+    "loadingOlder": "Cargando mensajes anteriores...",
+    "inputPlaceholder": "Escribe un mensaje...",
+    "retry": "Reintentar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "edited": "editado",
+    "addMember": "Agregar miembro",
+    "memberUserId": "ID del usuario",
+    "roleMember": "Miembro",
+    "roleAdmin": "Administrador",
+    "createTitle": "Crear canal",
+    "channelName": "Nombre del canal",
+    "channelDescription": "Descripción (opcional)",
+    "privateChannel": "Canal privado",
+    "create": "Crear",
+    "messageState": {
+      "pending": "Pendiente",
+      "sent": "Enviado",
+      "failed": "Fallido"
+    },
+    "realtime": {
+      "connecting": "Conectando...",
+      "open": "En línea",
+      "closed": "Sin conexión"
+    }
+  },
+  "copilot": {
+    "title": "Copiloto de IA",
+    "historyTitle": "Historial",
+    "toggleHistory": "Mostrar u ocultar el historial",
+    "recentQueries": "Consultas recientes",
+    "historyError": "No se pudo cargar el historial.",
+    "historyEmpty": "Todavía no has hecho consultas.",
+    "usageTitle": "Consumo acumulado",
+    "usageError": "No se pudo cargar el consumo.",
+    "usageEmpty": "Sin consumo registrado.",
+    "usageQueries": "Consultas",
+    "usageAnswered": "Respondidas",
+    "usageRefused": "Rechazadas",
+    "usageTokens": "Tokens totales",
+    "emptyState": "Hazle una pregunta al copiloto sobre tus conversaciones.",
+    "inputPlaceholder": "Pregúntale algo al copiloto...",
+    "thinking": "El copiloto está procesando la consulta...",
+    "askError": "No se pudo enviar la consulta. Inténtalo de nuevo.",
+    "citations": "Fuentes citadas",
+    "status": {
+      "answered": "Respuesta",
+      "refused_no_context": "Sin contexto suficiente",
+      "refused_permission": "Sin permiso para ese contenido",
+      "error": "Error del copiloto"
+    }
+  },
+  "profile": {
+    "title": "Perfil de usuario",
+    "subtitle": "Datos de tu cuenta en la plataforma.",
+    "error": "No se pudo cargar el perfil.",
+    "platformAdmin": "Administrador de plataforma",
+    "accountData": "Datos de la cuenta",
+    "fullName": "Nombre completo",
+    "jobTitle": "Cargo",
+    "email": "Correo electrónico",
+    "visibleConversations": "Conversaciones visibles",
+    "editUnavailable": "Edición no disponible en esta versión."
+  },
+  "admin": {
+    "title": "Gestión de usuarios",
+    "subtitle": "Consulta, edición y eliminación de usuarios de la plataforma.",
+    "searchPlaceholder": "Buscar por nombre o cargo...",
+    "search": "Buscar",
+    "includeInactive": "Incluir inactivos",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "empty": "No hay usuarios que coincidan con la búsqueda.",
+    "editTitle": "Editar usuario",
+    "displayName": "Nombre visible",
+    "jobTitle": "Cargo",
+    "bio": "Biografía",
+    "activeUser": "Usuario activo",
+    "deleteTitle": "Eliminar usuario",
+    "deleteConfirm": "¿Seguro que quieres eliminar a {{ name }}? Se conservan sus mensajes y su historial.",
+    "error": {
+      "list": "No se pudo cargar el listado de usuarios.",
+      "forbidden": "No tienes permiso para esta acción.",
+      "action": "No se pudo completar la acción. Inténtalo de nuevo."
+    }
+  }
+}

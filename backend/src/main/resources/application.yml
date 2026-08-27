@@ -1,0 +1,66 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: riwi-messaging-backend
+  datasource:
+    # el backend se conecta SIEMPRE como el rol de aplicacion riwi_app (sin SUPERUSER ni BYPASSRLS)
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:bd_nombre_apellido_clan}
+    username: ${DB_APP_USER:riwi_app}
+    password: ${DB_APP_PASSWORD:riwi_app}
+  flyway:
+    # deshabilitado: riwi_app no crea roles; las migraciones las corre un superusuario bootstrap (ver db/README.md)
+    enabled: false
+    locations: filesystem:../db/migrations
+    baseline-on-migrate: true
+
+riwi:
+  search:
+    # config de text search para websearch_to_tsquery/ts_headline; DEBE coincidir con el trigger trg_rw_message_search_sync
+    text-config: ${SEARCH_TEXT_CONFIG:spanish}
+  ai:
+    chat:
+      # chat del copiloto: Groq, formato OpenAI. Nunca hardcodeado, siempre por entorno.
+      base-url: ${AI_CHAT_BASE_URL:https://api.groq.com/openai/v1}
+      api-key: ${AI_CHAT_API_KEY:}
+      model: ${AI_CHAT_MODEL:llama-3.3-70b-versatile}
+    embedding:
+      # embeddings del RAG: OpenAI (Groq no expone endpoint de embeddings)
+      base-url: ${AI_EMBEDDING_BASE_URL:https://api.openai.com/v1}
+      api-key: ${AI_EMBEDDING_API_KEY:}
+      model: ${AI_EMBEDDING_MODEL:text-embedding-3-small}
+      dimensions: ${AI_EMBEDDING_DIMENSIONS:1536}
+  copilot:
+    # top-K de fragmentos de contexto y umbral minimo de similitud coseno para la negativa honesta
+    top-k: ${COPILOT_TOP_K:6}
+    min-similarity: ${COPILOT_MIN_SIMILARITY:0.3}
+  embeddings:
+    # backfill de embeddings al arrancar; en produccion esto seria asincrono/cola
+    backfill-on-startup: ${EMBEDDINGS_BACKFILL_ON_STARTUP:false}
+    # missing = solo vectores faltantes; all = re-embebe todo (sobrescribe los sinteticos del seed)
+    backfill-mode: ${EMBEDDINGS_BACKFILL_MODE:missing}
+  jwt:
+    # secreto HS256: minimo 32 caracteres (256 bits). Nunca hardcodeado, siempre por entorno.
+    secret: ${JWT_SECRET:local-dev-secret-change-me-please-32bytes!}
+    access-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:15}
+    refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
+
+springdoc:
+  api-docs:
+    # contrato OpenAPI en JSON (y en YAML bajo /v3/api-docs.yaml)
+    path: /v3/api-docs
+  swagger-ui:
+    # UI interactiva del contrato
+    path: /swagger-ui.html
+    # agrupamos y ordenamos las operaciones para una lectura estable
+    operations-sorter: alpha
+    tags-sorter: alpha
+  # salida determinista del contrato: evita ruido en git al regenerar docs/openapi.yaml
+  writer-with-order-by-keys: true
+  writer-with-default-pretty-printer: true
+
+logging:
+  pattern:
+    # incluimos el correlation id en cada linea de log via MDC
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId:-no-cid}] %logger{36} - %msg%n"
