@@ -36,10 +36,12 @@ Antes de implementar cualquier cosa, relee `assesment_empleabilidad_cohorte6.md`
 - El copiloto RAG solo recupera contexto de canales donde el actor autenticado es miembro — el filtro de permisos vive en la consulta SQL, no solo en el código Java.
 
 ## Estilo de código y comentarios
+Aunque este es el stack de mayor dominio del coder, el código debe poder explicarse línea por línea en la sustentación — así que se comenta de forma simple y constante, no solo lo "no obvio".
 - Comentarios solo con `//`, nunca con bloques `/* */` ni Javadoc extenso.
 - Un comentario nunca ocupa más de una línea.
 - Nunca dos líneas de comentario consecutivas — si hace falta explicar varias cosas seguidas, el código debería simplificarse o dividirse en vez de acumular comentarios.
-- Comenta solo lo que no es obvio (una restricción de negocio, un motivo de diseño no evidente); nunca describas qué hace el código si el nombre ya lo dice.
+- Cada bloque funcional relevante (una query, una llamada a un puerto/servicio, una validación, un `SET LOCAL`, una transacción) lleva un comentario corto tipo `// llamamos al SP de edición de usuario` o `// fijamos el actor para RLS` — simple y directo, no jerga innecesaria.
+- No hace falta comentar lo trivial (un getter, un mapeo directo campo a campo); el criterio es: si al releerlo no se entiende de inmediato qué se está llamando o para qué, lleva comentario.
 
 ## Verificación antes de dar por terminada una feature
 ```
