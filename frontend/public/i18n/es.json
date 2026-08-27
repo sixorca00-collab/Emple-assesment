@@ -6,5 +6,30 @@
     "chat": "Conversación",
     "copilot": "Copiloto",
     "profile": "Perfil"
+  },
+  "theme": {
+    "toggle": "Cambiar tema"
+  },
+  "auth": {
+    "logout": "Cerrar sesión"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "subtitle": "Accede a la plataforma de mensajería Riwi",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tu.correo@riwi.io",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Tu contraseña",
+    "submit": "Entrar",
+    "loading": "Entrando...",
+    "validation": {
+      "emailRequired": "El correo es obligatorio",
+      "emailInvalid": "El correo no tiene un formato válido",
+      "passwordRequired": "La contraseña es obligatoria"
+    },
+    "error": {
+      "invalid": "Correo o contraseña incorrectos",
+      "network": "No se pudo conectar con el servidor. Inténtalo de nuevo."
+    }
   }
 }
