@@ -46,7 +46,20 @@ Nunca se recorta: RLS, validación de permisos en BD, soft delete, keyset pagina
 
 ---
 
-## D4. (Placeholder) Recortes durante la ejecución
+## D4. Proveedor de IA: Groq (chat) + OpenAI (embeddings)
+
+**Decisión:** el copiloto usa **Groq** para las respuestas de chat (compatible con el formato de API de OpenAI, solo cambia `base_url` y API key) y **OpenAI** (`text-embedding-3-small`) para los embeddings del RAG.
+
+**Justificación:**
+- Groq ofrece la inferencia más rápida del mercado sobre modelos abiertos (Llama 3.3 70B / Llama 3.1 8B) con límites gratuitos generosos (hasta 14,400 solicitudes/día en el modelo 8B), ideal para demos en vivo sin preocuparse por rate limits.
+- Se verificó en la documentación oficial de Groq (`console.groq.com/docs/models` y `/docs/api-reference`, agosto 2026) que **no exponen un endpoint de embeddings** — su catálogo es deliberadamente solo de chat/inferencia. Por eso los embeddings quedan en un proveedor separado.
+- Ambos quedan detrás de dos puertos (`ChatPort`, `EmbeddingPort`) en el dominio, cumpliendo el requisito de "proveedor de IA intercambiable" del punto 8 sin acoplar el dominio a ningún SDK concreto — cambiar cualquiera de los dos proveedores después es solo config (`.env`), no código.
+
+**Placeholder para el día de la jornada:** confirmar si Groq agregó soporte de embeddings antes de implementar (su catálogo cambia rápido); si no, mantener OpenAI como fallback ya decidido acá.
+
+---
+
+## D5. (Placeholder) Recortes durante la ejecución
 
 > Completar en vivo durante la jornada si se decide posponer o simplificar algún requerimiento.
 
@@ -54,6 +67,6 @@ Nunca se recorta: RLS, validación de permisos en BD, soft delete, keyset pagina
 
 ---
 
-## D5. (Placeholder) Patrones de diseño aplicados
+## D6. (Placeholder) Patrones de diseño aplicados
 
 > Completar al implementar. Justificar cada patrón usado (ej. Repository, Adapter/Ports, Strategy para el proveedor de IA, etc.) y por qué se eligió sobre alternativas.
