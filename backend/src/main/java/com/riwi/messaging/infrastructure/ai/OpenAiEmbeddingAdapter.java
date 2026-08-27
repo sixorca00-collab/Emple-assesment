@@ -18,9 +18,9 @@ public class OpenAiEmbeddingAdapter implements EmbeddingPort {
     private final String model;
     private final int dimensions;
 
-    public OpenAiEmbeddingAdapter(AiEmbeddingProperties properties) {
+    public OpenAiEmbeddingAdapter(AiEmbeddingProperties properties, RestClient.Builder builder) {
         // base url y api key vienen 100% de entorno (AI_EMBEDDING_BASE_URL / AI_EMBEDDING_API_KEY)
-        this.client = RestClient.builder()
+        this.client = builder
                 .baseUrl(properties.baseUrl())
                 .defaultHeader("Authorization", "Bearer " + properties.apiKey())
                 .build();
@@ -30,8 +30,8 @@ public class OpenAiEmbeddingAdapter implements EmbeddingPort {
 
     @Override
     public float[] embed(String text) {
-        // cuerpo con formato /embeddings de OpenAI
-        Map<String, Object> body = Map.of("model", model, "input", text);
+        // cuerpo con formato /embeddings de OpenAI; dimensions fuerza el tamano del vector (Gemini devolveria 3072 sin esto)
+        Map<String, Object> body = Map.of("model", model, "input", text, "dimensions", dimensions);
 
         // llamamos al endpoint de embeddings del proveedor
         EmbeddingResponse response = client.post()
