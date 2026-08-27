@@ -5,7 +5,8 @@
   "nav": {
     "chat": "Conversation",
     "copilot": "Copilot",
-    "profile": "Profile"
+    "profile": "Profile",
+    "admin": "Users"
   },
   "theme": {
     "toggle": "Toggle theme"
@@ -152,5 +153,29 @@
     "email": "Email",
     "visibleConversations": "Visible conversations",
     "editUnavailable": "Editing is not available in this version."
+  },
+  "admin": {
+    "title": "User management",
+    "subtitle": "Query, edit and delete platform users.",
+    "searchPlaceholder": "Search by name or job title...",
+    "search": "Search",
+    "includeInactive": "Include inactive",
+    "active": "Active",
+    "inactive": "Inactive",
+    "edit": "Edit",
+    "delete": "Delete",
+    "empty": "No users match the search.",
+    "editTitle": "Edit user",
+    "displayName": "Display name",
+    "jobTitle": "Job title",
+    "bio": "Bio",
+    "activeUser": "Active user",
+    "deleteTitle": "Delete user",
+    "deleteConfirm": "Are you sure you want to delete {{ name }}? Their messages and history are kept.",
+    "error": {
+      "list": "The user list could not be loaded.",
+      "forbidden": "You are not allowed to perform this action.",
+      "action": "The action could not be completed. Please try again."
+    }
   }
 }

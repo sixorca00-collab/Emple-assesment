@@ -1,0 +1,133 @@
+<div class="min-h-[calc(100vh-4rem)] w-full bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-slate-100 p-6 md:p-10 overflow-y-auto">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <div class="border-b border-light-border dark:border-dark-border pb-5">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ 'admin.title' | translate }}</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ 'admin.subtitle' | translate }}</p>
+    </div>
+
+    <!-- Buscador y filtro de inactivos -->
+    <form (ngSubmit)="applySearch()" class="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <input type="text" [(ngModel)]="searchTerm" name="searchTerm"
+        [placeholder]="'admin.searchPlaceholder' | translate"
+        class="flex-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm" />
+      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <input type="checkbox" [(ngModel)]="includeInactive" name="includeInactive" (change)="applySearch()" />
+        {{ 'admin.includeInactive' | translate }}
+      </label>
+      <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+        {{ 'admin.search' | translate }}
+      </button>
+    </form>
+
+    <!-- Estado: cargando -->
+    <div *ngIf="service.status() === 'loading'" class="text-center py-16 text-slate-500 dark:text-slate-400">
+      {{ 'common.loading' | translate }}
+    </div>
+
+    <!-- Estado: error con reintento -->
+    <div *ngIf="service.status() === 'error'" class="text-center py-16 space-y-4">
+      <p class="text-sm text-rose-600 dark:text-rose-400">{{ 'admin.error.list' | translate }}</p>
+      <button (click)="applySearch()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+
+    <!-- Estado: listo -->
+    <ng-container *ngIf="service.status() === 'ready'">
+      <!-- Vacio -->
+      <p *ngIf="service.users().length === 0" class="text-center py-16 text-sm text-slate-500 dark:text-slate-400">
+        {{ 'admin.empty' | translate }}
+      </p>
+
+      <!-- Lista de usuarios -->
+      <ul *ngIf="service.users().length > 0" class="space-y-2">
+        <li *ngFor="let user of service.users()"
+          class="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-2xl p-4 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-400 text-white flex items-center justify-center font-bold">
+            {{ user.displayName.charAt(0) }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-slate-900 dark:text-white truncate">{{ user.displayName }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ user.jobTitle }}</p>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full uppercase"
+            [ngClass]="user.isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">
+            {{ (user.isActive ? 'admin.active' : 'admin.inactive') | translate }}
+          </span>
+          <button (click)="openEdit(user)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-accent-300 hover:bg-brand-200">
+            {{ 'admin.edit' | translate }}
+          </button>
+          <button (click)="openDelete(user)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 hover:bg-rose-200">
+            {{ 'admin.delete' | translate }}
+          </button>
+        </li>
+      </ul>
+
+      <!-- Cargar mas (keyset) -->
+      <div *ngIf="service.hasMore()" class="text-center pt-4">
+        <button (click)="service.loadMore()" class="px-4 py-2 rounded-xl border border-light-border dark:border-dark-border text-sm font-medium hover:bg-light-surface dark:hover:bg-dark-surface">
+          {{ 'common.loadMore' | translate }}
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Modal: editar usuario -->
+<div *ngIf="editing() as user" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+  <div class="bg-light-surface dark:bg-dark-surface rounded-2xl p-6 w-full max-w-md space-y-4">
+    <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ 'admin.editTitle' | translate }}</h2>
+    <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="space-y-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{{ 'admin.displayName' | translate }}</label>
+        <input type="text" formControlName="displayName"
+          class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{{ 'admin.jobTitle' | translate }}</label>
+        <input type="text" formControlName="jobTitle"
+          class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{{ 'admin.bio' | translate }}</label>
+        <textarea formControlName="bio" rows="3"
+          class="w-full bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-xl px-4 py-2.5 text-sm"></textarea>
+      </div>
+      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <input type="checkbox" formControlName="isActive" />
+        {{ 'admin.activeUser' | translate }}
+      </label>
+
+      <p *ngIf="actionError()" class="text-sm text-rose-600 dark:text-rose-400">{{ actionError() | translate }}</p>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" (click)="closeEdit()" class="px-4 py-2 rounded-xl text-sm font-medium border border-light-border dark:border-dark-border">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="submit" [disabled]="saving()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium disabled:opacity-50">
+          {{ 'common.save' | translate }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: confirmar eliminacion -->
+<div *ngIf="deleting() as user" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+  <div class="bg-light-surface dark:bg-dark-surface rounded-2xl p-6 w-full max-w-md space-y-4">
+    <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ 'admin.deleteTitle' | translate }}</h2>
+    <p class="text-sm text-slate-600 dark:text-slate-300">{{ 'admin.deleteConfirm' | translate: { name: user.displayName } }}</p>
+
+    <p *ngIf="actionError()" class="text-sm text-rose-600 dark:text-rose-400">{{ actionError() | translate }}</p>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" (click)="closeDelete()" class="px-4 py-2 rounded-xl text-sm font-medium border border-light-border dark:border-dark-border">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" (click)="confirmDelete()" [disabled]="saving()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium disabled:opacity-50">
+        {{ 'admin.delete' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
