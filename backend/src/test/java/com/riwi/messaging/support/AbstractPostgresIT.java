@@ -79,6 +79,21 @@ public abstract class AbstractPostgresIT {
         }
     }
 
+    // ejecuta trabajo como el superusuario bootstrap (bypassa RLS): util para preparar embeddings en tests
+    protected static void runAsBootstrap(BootstrapWork work) {
+        try (Connection conn = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), BOOTSTRAP_USER, BOOTSTRAP_PASSWORD)) {
+            work.run(conn);
+        } catch (Exception e) {
+            throw new IllegalStateException("bootstrap work failed", e);
+        }
+    }
+
+    @FunctionalInterface
+    protected interface BootstrapWork {
+        void run(Connection connection) throws Exception;
+    }
+
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
         // el backend bajo prueba se conecta como riwi_app => queda sujeto a RLS
