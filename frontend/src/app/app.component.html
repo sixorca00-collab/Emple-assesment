@@ -1,17 +1,5 @@
-<div class="min-h-screen flex flex-col">
-  <header class="flex items-center justify-between px-4 py-3 border-b">
-    <h1 class="font-bold">{{ 'app.title' | translate }}</h1>
-    <nav class="flex gap-4">
-      <a routerLink="/chat">{{ 'nav.chat' | translate }}</a>
-      <a routerLink="/copilot">{{ 'nav.copilot' | translate }}</a>
-      <a routerLink="/profile">{{ 'nav.profile' | translate }}</a>
-    </nav>
-    <div class="flex gap-2">
-      <button (click)="switchLang('es')">ES</button>
-      <button (click)="switchLang('en')">EN</button>
-    </div>
-  </header>
-  <main class="flex-1 p-4">
-    <router-outlet />
-  </main>
-</div>
+<app-header></app-header>
+
+<main class="h-[calc(100vh-4rem)] overflow-y-auto">
+  <router-outlet></router-outlet>
+</main>
