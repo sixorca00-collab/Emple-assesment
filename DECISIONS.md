@@ -67,6 +67,22 @@ Nunca se recorta: RLS, validación de permisos en BD, soft delete, keyset pagina
 
 ---
 
-## D6. (Placeholder) Patrones de diseño aplicados
+## D6. Patrones de diseño aplicados (backend)
 
-> Completar al implementar. Justificar cada patrón usado (ej. Repository, Adapter/Ports, Strategy para el proveedor de IA, etc.) y por qué se eligió sobre alternativas.
+Estado: parcial — cubre el esqueleto + autenticación (D2 bloque 5-6). Se ampliará con mensajería, RAG y WebSocket.
+
+- **Ports & Adapters (Hexagonal / Clean Architecture).** El dominio define interfaces (`UserRepository`, `RefreshTokenRepository`, `ConversationRepository`, `PasswordHasher`, `AccessTokenPort`, `OpaqueTokenGenerator`, `TokenHasher`) sin ninguna dependencia de Spring ni de un driver. `infrastructure` provee los adaptadores concretos (`Jdbc*Repository`, `BCryptPasswordHasher`, `JjwtAccessTokenAdapter`, `Sha256TokenHasher`, `SecureRandomOpaqueTokenGenerator`). Permite testear casos de uso sin infraestructura y cambiar de adaptador (p. ej. jOOQ en vez de JdbcTemplate, o Argon2 en vez de BCrypt) sin tocar dominio ni aplicación. Alternativa descartada: repos JPA anotados en el dominio — acopla el dominio al ORM y a su ciclo de sesión.
+- **Repository.** Cada agregado de lectura/escritura se expone como un repositorio con métodos de intención (`findByEmail`, `markRotated`, `revokeAllActiveForUser`) en vez de un DAO genérico; el SQL parametrizado vive solo en el adaptador.
+- **Adapter.** `BCryptPasswordHasher` y `JjwtAccessTokenAdapter` adaptan librerías de terceros (spring-security-crypto, jjwt) a los puertos del dominio; el resto del código nunca importa esos tipos.
+- **Strategy (implícito, vía puertos).** `AccessTokenPort` / `PasswordHasher` / `TokenHasher` son puntos de sustitución en runtime por configuración; es la misma base que usará `ChatPort`/`EmbeddingPort` para el proveedor de IA intercambiable del req. 8.
+- **Command.** La entrada de cada caso de uso es un `record` inmutable (`LoginCommand`, `RefreshCommand`, `LogoutCommand`); los controllers mapean DTO REST → command y nunca pasan entidades del framework web hacia adentro.
+- **Aspect / Interceptor (AOP).** `TransactionActorAspect` fija `app.current_user_id` (actor de RLS) al inicio de cada caso de uso transaccional autenticado, sin repetir el `SET LOCAL` en cada método. Ordenado con `@EnableTransactionManagement(order = 0)` + `@Order(50)` para ejecutarse **dentro** de la transacción. Alternativa descartada: llamada manual en cada repositorio/caso de uso — fácil de olvidar y difícil de auditar.
+- **Chain of Responsibility (filtros servlet).** `CorrelationIdFilter` (correlación + MDC) → `JwtAuthenticationFilter` (token → `SecurityContext`) → cadena de Spring Security.
+- **Rotación de refresh token con detección de reuso.** El refresh se guarda solo como hash SHA-256; en cada uso se revoca el anterior (`revoked_at` + `replaced_by`) y se emite uno nuevo. Presentar un refresh ya revocado revoca toda la cadena del usuario en una transacción `REQUIRES_NEW` (`TokenReuseGuard`), para que la revocación se confirme aunque la petición se rechace.
+
+### Decisiones puntuales de esta entrega
+- **Spring Boot 3.3.4** (no 3.3.5): es la versión disponible en el entorno de build; sin impacto funcional.
+- **`java.time.Clock` inyectable** en vez de `Instant.now()` directo: hace testeable la expiración de tokens.
+- **Access token corto (15 min por defecto)** con claims `sub`, `is_platform_admin`, `name`, `job_title`, `type=access`, HS256. `is_platform_admin` en el token es solo un atajo para cortar rutas admin; la autoridad sigue siendo `rw_is_platform_admin()` en la BD.
+- **`spring.flyway.enabled=false` por defecto** en la app: el rol `riwi_app` no puede crear roles, así que las migraciones las corre un superusuario bootstrap (docker-compose / Flyway CLI). En los tests se ejecuta Flyway como el superusuario del contenedor y el backend bajo prueba se conecta como `riwi_app` (sujeto a RLS).
+- **Tests de integración `*IT` incluidos en `mvn test`** (config de surefire) para que la verificación sea un solo comando.
